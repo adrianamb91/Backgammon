@@ -47,39 +47,43 @@ class Board:
                     if (source[0] == 0) :
                         source[1] = 'n'
             return 1
-    
-    def make_player_move(self, col, n) :
-        source = self.allSpaces[col]
-        if (col > 0 and (source[0] == 0 or 'p' != source[1])) :
-            print "Invalid move - invalid source"
-            return -1
-        elif (col-n < 1) :
-            print "Invalid move - invalid destination"
+        
+    def valid_player_move(self, col, n) :
+        bar = self.allSpaces[0]
+        if (bar[2] != 0 and col != 0) :
+            print "Invalid move - you have pieces on the bar"
             return -1
         else:
-            destination = self.allSpaces[col-n]
-            if (destination[1] == 'n' or destination[1] == 'p') :
-                # we can do the move
+            if (col == 0) :
+                destination = self.allSpaces[25 - n]
+            else :
+                destination = self.allSpaces[col - n]
+            if (destination[1] == 'c' and destination[0] > 1) :
+                print "Invalid move - destination occupied"
+                return -1
+        return 1
+    
+    def make_player_move(self, col, n) :
+        if (self.valid_player_move(col, n) == -1) :
+            print "Can't do the move"
+            return -1
+        else:
+            if (col == 0) :
+                bar = self.allSpaces[0]
+                bar[2] -= 1
+                destination = self.allSpaces[25-n]
+            else :
+                source = self.allSpaces[col]
                 source[0] -= 1
-                destination[0] += 1
-                destination[1] = 'p'
                 if (source[0] == 0) :
                     source[1] = 'n'
-            else:
-                if (destination[0] > 1) :
-                    #we can't do the move
-                    print "Invalid move - occupied"
-                    return -1
-                else:
-                    # we can do the move and we put the other player on the bar
-                    bar = self.allSpaces[0]
-                    if (destination[1] == 'c') :
-                        bar[0] += 1
-                    destination[1] = 'p'
-                    source[0] -= 1
-                    if (source[0] == 0) :
-                        source[1] = 'n'
-            return 1
-                    
+                destination = self.allSpaces[col - n]
+            if (destination[1] == 'c' and destination[0] == 1) :
+                destination[1] = 'p'
+                bar[0] += 1
+            else :
+                destination[0] += 1
+                destination[1] = 'p'
+                                  
                 
             
