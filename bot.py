@@ -20,7 +20,7 @@ while (movement != '-') :
     movement = input("Player Move: ")
     
     for i in range (0, len(movement), 2) :
-        b.make_player_move(movement[i], movement[i + 1]) 
+        b.move_player(movement[i], movement[i + 1]) 
         
         
     # computer move
@@ -28,14 +28,18 @@ while (movement != '-') :
     dice1 = random.randint(1, 6)
     dice2 = random.randint(1, 6)
     
+    if (dice1 == dice2) :
+        dices = (dice1, dice1, dice1, dice1)
+    else :
+        dices = (dice1, dice2)
+    
     for i in range(25):
         print i, " ", b.allSpaces[i]
         
     print "Dices = ", dice1, " ", dice2
-    movement = input("Computer Move: ")
     
-    for i in range (0, len(movement), 2) :
-        b.make_computer_move(movement[i], movement[i + 1]) 
+    b.compute_move(dices)
+    
      
 
 

@@ -4,7 +4,7 @@ class Board:
         for i in range(25):
             self.allSpaces.insert(i, (0, 'n')) # n = nothing
             
-        self.allSpaces[0] = (0, 'c', 0, 'p')
+        self.allSpaces[0] = (0, 'c', 0, 'p') # bar
         self.allSpaces[1] = (2, 'c') # c = computer, p = player
         self.allSpaces[6] = (5, 'p')
         self.allSpaces[8] = (3, 'p')
@@ -18,14 +18,14 @@ class Board:
             self.allSpaces[i] = list(self.allSpaces[i])
             
             
-    def make_computer_move(self, col, n) :
+    def make_move(self, col, n) :
         source = self.allSpaces[col]
         if (col > 0 and (source[0] == 0 or 'c' != source[1])) :
             print "Invalid move - invalid source"
-            return -1
+            return False
         elif (col+n < 0) :
             print "Invalid move - invalid destination"
-            return -1
+            return False
         else:
             destination = self.allSpaces[col+n]
             if (destination[1] == 'n' or destination[1] == 'c') :
@@ -37,7 +37,7 @@ class Board:
             else:
                 if (destination[0] > 1) :
                     print "Invalid move - occupied"
-                    return -1
+                    return False
                 else:
                     bar = self.allSpaces[0]
                     if (destination[1] == 'p') :
@@ -46,13 +46,55 @@ class Board:
                     source[0] -= 1
                     if (source[0] == 0) :
                         source[1] = 'n'
-            return 1
+            return True
         
+    def check_bar(self) :
+        b = self.allSpaces[0]
+        if (b[0] != 0) :
+            return True
+        return False
+    
+    def go_towards_house(self, dice) :
+        i = 1
+        t = False
+        while (t == False and i < 25) :
+            if (self.allSpaces[i][1] != 'c') :
+                i += 1
+            else :
+                if (self.allSpaces[i+dice][1] == 'c' or self.allSpaces[i+dice][1] == 'n' 
+                    or (self.allSpaces[i+dice][1] == 'p' and self.allSpaces[i+dice][0] == 1)) :
+                    t = True
+                else :
+                    i += 1
+        if (i < 25) :
+            self.make_move(i, dice)
+        return
+    
+    def compute_move(self, dices) :
+        if (dices[0] == dices[1]) :
+            dice_usage = [False, False, False, False]
+        else :
+            dice_usage = [False, False]
+        
+        while (dice_usage.count(False) != 0) :
+            
+            if (self.check_bar() == False) :
+                # compute move
+                print "You can compute your move normally"
+                dice_index = dice_usage.index(False)
+                self.go_towards_house(dices[dice_index])
+                dice_usage[dice_index] = True
+            else :
+                # try to move piece from bar
+                print "You have to move your piece(s) from the bar first"
+                
+        return
+    
     def valid_player_move(self, col, n) :
         bar = self.allSpaces[0]
         if (bar[2] != 0 and col != 0) :
             print "Invalid move - you have pieces on the bar"
-            return -1
+            return False
         else:
             if (col == 0) :
                 destination = self.allSpaces[25 - n]
@@ -60,13 +102,14 @@ class Board:
                 destination = self.allSpaces[col - n]
             if (destination[1] == 'c' and destination[0] > 1) :
                 print "Invalid move - destination occupied"
-                return -1
-        return 1
+                return False
+        return True
     
-    def make_player_move(self, col, n) :
-        if (self.valid_player_move(col, n) == -1) :
+    
+    def move_player(self, col, n) :
+        if (self.valid_player_move(col, n) == False) :
             print "Can't do the move"
-            return -1
+            return False
         else:
             if (col == 0) :
                 bar = self.allSpaces[0]
@@ -84,6 +127,7 @@ class Board:
             else :
                 destination[0] += 1
                 destination[1] = 'p'
+        return True
                                   
                 
             
