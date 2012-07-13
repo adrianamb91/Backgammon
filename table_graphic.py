@@ -22,6 +22,9 @@ class Table(object):
             label.render()
         for label_text in self.labels_text:
             label_text.draw()
+        for piece in self.pieces:
+            for parts in piece:
+                parts.render()
 
     def resize(self):
         temp_width = self.width - conf.BORDER_THICKNESS * 2
@@ -211,6 +214,62 @@ class Table(object):
                 self.labels_text[k].x = tx_offset_x
                 self.labels_text[k].y = tx_offset_y
                 self.labels_text[k].font_size = tx_size
+
+        # Draw sample piece
+        piece_width = []
+        piece_width.append(triangle_width * conf.PIECE_WIDTH)
+        piece_shadow = triangle_width
+        piece_border = piece_width[0] * conf.PIECE_BORDER_THICKNESS
+        piece_width.append(piece_width[0] - piece_border * 2)
+        piece_width.append(piece_width[0] * conf.PIECE_MIDDLE_THICKNESS)
+        colors = [ {'shadow' : conf.PIECE_WHITE_SHADOW_COLOR,
+                    'border' : conf.PIECE_WHITE_BORDER_COLOR,
+                    'inner'  : conf.PIECE_WHITE_INNER_COLOR},
+                   {'shadow' : conf.PIECE_BLACK_SHADOW_COLOR,
+                    'border' : conf.PIECE_BLACK_BORDER_COLOR,
+                    'inner'  : conf.PIECE_BLACK_INNER_COLOR}]
+
+        if init:
+            self.pieces = []
+
+        for i in range(2):
+            pc_offset_x = (i + 1) * 100 + gl_offset_x + (piece_width[0] + piece_shadow) / 2
+            pc_offset_y = 100 + gl_offset_y + (piece_width[0] + piece_shadow) / 2
+
+            self.pieces.append([])
+
+            if init:
+                self.pieces[i].append(primitives.Circle(x = pc_offset_x,
+                                    y = pc_offset_y,
+                                    width = piece_shadow,
+                                    color = colors[i]['shadow'],
+                                    stroke = 0))
+                                    
+                self.pieces[i].append(primitives.Circle(x = pc_offset_x,
+                                    y = pc_offset_y,
+                                    width = piece_width[0],
+                                    color = colors[i]['border'],
+                                    stroke = 0))
+
+                self.pieces[i].append(primitives.Circle(x = pc_offset_x,
+                                    y = pc_offset_y,
+                                    width = piece_width[1],
+                                    color = colors[i]['inner'],
+                                    stroke = 0))
+
+                self.pieces[i].append(primitives.Circle(x = pc_offset_x,
+                                    y = pc_offset_y,
+                                    width = piece_width[2],
+                                    color = colors[i]['border'],
+                                    stroke = 0))
+            else:
+                self.pieces[i][0].width = piece_shadow
+                for j in range(3):
+                    self.pieces[i][j + 1].width = piece_width[j]
+
+                for j in range(4):
+                    self.pieces[i][j].x = pc_offset_x
+                    self.pieces[i][j].y = pc_offset_y
 
 if __name__ == '__main__':
     print "Please import me, do not run me directly!"
