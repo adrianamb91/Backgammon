@@ -54,6 +54,22 @@ class Board:
             return True
         return False
     
+    def go_towards_house(self, dice) :
+        i = 1
+        t = False
+        while (t == False and i < 25) :
+            if (self.allSpaces[i][1] != 'c') :
+                i += 1
+            else :
+                if (self.allSpaces[i+dice][1] == 'c' or self.allSpaces[i+dice][1] == 'n' 
+                    or (self.allSpaces[i+dice][1] == 'p' and self.allSpaces[i+dice][0] == 1)) :
+                    t = True
+                else :
+                    i += 1
+        if (i < 25) :
+            self.make_move(i, dice)
+        return
+    
     def compute_move(self, dices) :
         if (dices[0] == dices[1]) :
             dice_usage = [False, False, False, False]
@@ -66,10 +82,7 @@ class Board:
                 # compute move
                 print "You can compute your move normally"
                 dice_index = dice_usage.index(False)
-                i = 1
-                while (self.allSpaces[i][1] != 'c') :
-                    i += 1
-                self.make_move(i, dices[dice_index])
+                self.go_towards_house(dices[dice_index])
                 dice_usage[dice_index] = True
             else :
                 # try to move piece from bar

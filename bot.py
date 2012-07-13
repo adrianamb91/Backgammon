@@ -28,7 +28,10 @@ while (movement != '-') :
     dice1 = random.randint(1, 6)
     dice2 = random.randint(1, 6)
     
-    dices = (dice1, dice2)
+    if (dice1 == dice2) :
+        dices = (dice1, dice1, dice1, dice1)
+    else :
+        dices = (dice1, dice2)
     
     for i in range(25):
         print i, " ", b.allSpaces[i]
