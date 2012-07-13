@@ -28,11 +28,11 @@ class BackgammonWindow(pyglet.window.Window):
 
 if __name__ == '__main__':
     try:
-        config = Config(sample_buffers=1, samples=4, depth_size=16,
-                        double_buffer=True)
+        config = Config(sample_buffers = 1, samples = 4, depth_size = 0,
+                        double_buffer = False)
+        window = BackgammonWindow(config)
     except pyglet.window.NoSuchConfigException:
-        print "Smooth contex could not be aquiried."
-        config = None
-
-    window = BackgammonWindow(config)
+        print "Smooth contex could not be aquired."
+        window = BackgammonWindow(None)
+        
     pyglet.app.run()
