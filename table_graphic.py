@@ -2,6 +2,7 @@ import pyglet
 from pyglet.gl import *
 import primitives
 import backgammon_config as conf
+import math
 
 
 class Table(object):
@@ -17,6 +18,10 @@ class Table(object):
             half_bg.render()
         for triangle in self.triangles:
             triangle.render()
+        for label in self.labels:
+            label.render()
+        for label_text in self.labels_text:
+            label_text.draw()
 
     def resize(self):
         temp_width = self.width - conf.BORDER_THICKNESS * 2
@@ -123,7 +128,6 @@ class Table(object):
 
         for i in range(2):
             trh_offset_y = i * temp_height
-            print trh_offset_y
 
             for j in range(2):
                 trq_offset_x.append(hv_offset_x[j])
@@ -149,6 +153,64 @@ class Table(object):
             draw_color += 1
             if draw_color > 1: draw_color = 0
             triangle_pos *= -1
+
+        #Draw home labels.
+        label_width = self.table_width * conf.HOME_LABEL_WIDTH
+        label_height = inner_border_thickness * conf.HOME_LABEL_HEIGHT
+
+        corner_radius = label_width * conf.HOME_LABEL_CORNER_RADIUS
+        corner_points = (int) (corner_radius * conf.HOME_LABEL_CORNER_POINTS)
+        angle_step = math.pi / 2 / corner_points
+
+        big_offset = [(0, 0), (1, 0), (1, 1), (0, 1)]
+        small_offset = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
+
+        if init:
+            self.labels = []
+            self.labels_text = []
+            lb_text = ["Your home", "Opponent home"]
+
+        for k in range(2):
+            vertex_array = []
+
+            lb_offset_x = gl_offset_x + self.table_width * conf.HOME_LABEL_SPACER
+            lb_offset_y = gl_offset_y + self.table_height * k - inner_border_thickness * k + (inner_border_thickness - label_height) / 2
+
+            for i in range(4):
+                start_x = lb_offset_x + label_width * big_offset[i][0] + corner_radius * small_offset[i][0]
+                start_y = lb_offset_y + label_height * big_offset[i][1] + corner_radius * small_offset[i][1]
+
+                for j in range(corner_points):
+                    if i == 1 or i == 3: alfa = corner_points - j
+                    else: alfa = j
+
+                    w = corner_radius * math.cos(angle_step * alfa)
+                    h = corner_radius * math.sin(angle_step * alfa)
+                    vertex_array.append((start_x - w * small_offset[i][0],
+                                         start_y - h * small_offset[i][1]))
+
+            if init:
+                self.labels.append(primitives.Polygon(v = vertex_array,
+                                                color = conf.HOME_LABEL_BG_COLOR))
+            else:
+                self.labels[k].v = vertex_array
+
+            tx_offset_x = lb_offset_x + label_width / 2
+            tx_offset_y = lb_offset_y + label_height / 2
+            tx_size = label_height * conf.HOME_LABEL_TEXT_PROPORTION
+
+            if init:
+                self.labels_text.append(pyglet.text.Label(lb_text[k],
+                                        font_name = 'Helvetica',
+                                        font_size = tx_size,
+                                        bold = True,
+                                        color = conf.HOME_LABEL_FG_COLOR,
+                                        x = tx_offset_x, y = tx_offset_y,
+                                        anchor_x = 'center', anchor_y = 'center'))
+            else:
+                self.labels_text[k].x = tx_offset_x
+                self.labels_text[k].y = tx_offset_y
+                self.labels_text[k].font_size = tx_size
 
 if __name__ == '__main__':
     print "Please import me, do not run me directly!"
