@@ -4,6 +4,7 @@ import primitives
 import backgammon_config as conf
 import math
 import piece_graphic as piece
+import gradient
 
 
 class Table(object):
@@ -18,6 +19,7 @@ class Table(object):
     def render(self):
         self.background.render()
         self.table_border.render()
+        self.table_border_gradient.render()
         for half_3d in self.halves_3d:
             half_3d.render()
         for half_bg in self.halves_bg:
@@ -86,6 +88,8 @@ class Table(object):
     def draw_table_border(self, init = False):
         self.offset_x['global'] = (self.width - self.table_width) / 2
         self.offset_y['global'] = (self.height - self.table_height) / 2
+        self.inner_border_thickness = self.table_width * conf.INNER_BORDER_THICKNESS
+        gradient_end = self.inner_border_thickness * conf.TABLE_BORDER_GRADIENT_THICKNESS
 
         vertex_array = [(self.offset_x['global'], self.offset_y['global']),
                         (self.offset_x['global'] + self.table_width,
@@ -97,11 +101,20 @@ class Table(object):
         if init:
             self.table_border = primitives.Polygon(v = vertex_array,
                                                 color = conf.TABLE_BORDER_COLOR)
+            self.table_border_gradient = gradient.RectGradient(
+                                self.offset_x['global'], self.offset_y['global'],
+                                self.table_width, self.table_height,
+                                conf.TABLE_BORDER_SHADOW_START_COLOR,
+                                conf.TABLE_BORDER_SHADOW_END_COLOR,
+                                0, gradient_end)
         else:
             self.table_border.v = vertex_array
+            self.table_border_gradient.draw(
+                                self.offset_x['global'], self.offset_y['global'],
+                                self.table_width, self.table_height,
+                                0, gradient_end)
 
     def draw_table_3d(self, init = False):
-        self.inner_border_thickness = self.table_width * conf.INNER_BORDER_THICKNESS
         self.temp_width['illusion'] = self.table_width / 2 - self.inner_border_thickness * 2
         self.temp_height['illusion'] = self.table_height - self.inner_border_thickness * 2
 
@@ -254,4 +267,4 @@ class Table(object):
                 self.labels_text[k].font_size = tx_size
 
 if __name__ == '__main__':
-    print "Please import me, do not run me directly!"
+    "Please import me, do not run me directly!"
