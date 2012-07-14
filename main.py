@@ -26,6 +26,9 @@ class BackgammonWindow(pyglet.window.Window):
         super(BackgammonWindow, self).on_resize(width, height)
         self.CURRENT_SCREEN.draw(w = width, h = height)
 
+    def on_mouse_motion(self, x, y, dx, dy):
+        self.CURRENT_SCREEN.mouse_motion(x, y, dx, dy)
+
 if __name__ == '__main__':
     try:
         config = Config(alpha_size = 8, sample_buffers = 1, samples = 4,

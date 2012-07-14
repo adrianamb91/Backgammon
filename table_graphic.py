@@ -31,16 +31,6 @@ class Table(object):
         for p in self.pieces:
             p.render()
 
-    def resize(self):
-        temp_width = self.width - conf.BORDER_THICKNESS * 2
-        temp_height = temp_width * conf.RELATIVE_HEIGHT / conf.RELATIVE_WIDTH
-        if temp_height > self.height:
-            temp_height = self.height - conf.BORDER_THICKNESS * 2
-            temp_width = temp_height * conf.RELATIVE_WIDTH / conf.RELATIVE_HEIGHT
-
-        self.table_width = temp_width
-        self.table_height = temp_height
-
     def draw(self, w, h, init = False):
         self.width = w
         self.height = h
@@ -53,6 +43,20 @@ class Table(object):
         self.draw_table_triangles(init)
         self.draw_table_home_labels(init)
         self.draw_pieces(init)
+
+    def mouse_motion(self, x, y, dx, dy):
+        for p in self.pieces:
+            p.mouse_motion(x, y, dx, dy)
+
+    def resize(self):
+        temp_width = self.width - conf.BORDER_THICKNESS * 2
+        temp_height = temp_width * conf.RELATIVE_HEIGHT / conf.RELATIVE_WIDTH
+        if temp_height > self.height:
+            temp_height = self.height - conf.BORDER_THICKNESS * 2
+            temp_width = temp_height * conf.RELATIVE_WIDTH / conf.RELATIVE_HEIGHT
+
+        self.table_width = temp_width
+        self.table_height = temp_height
 
     def draw_pieces(self, init = False):
         width = self.temp_width['triangle']
