@@ -46,6 +46,8 @@ class Board:
                     source[0] -= 1
                     if (source[0] == 0) :
                         source[1] = 'n'
+                        
+            print "Made move: [", col, " ", n, "]"
             return True
         
     def check_bar(self) :
@@ -57,7 +59,7 @@ class Board:
     def go_towards_house(self, dice) :
         i = 1
         t = False
-        while (t == False and i < 25) :
+        while (t == False and i < 24) :
             if (self.allSpaces[i][1] != 'c') :
                 i += 1
             else :
@@ -66,9 +68,34 @@ class Board:
                     t = True
                 else :
                     i += 1
-        if (i < 25) :
+        if (t == True) :
             self.make_move(i, dice)
         return
+    
+    def make_gate(self, dice1, dice2) :
+        i = 1
+        t = False
+        dif = abs(dice1-dice2)
+        while (t == False and i < 24) :
+            if (self.allSpaces[i][1] == 'c' and self.allSpaces[i+dif][1] == 'c') :
+                #posibila poarta
+                if (self.allSpaces[i + max(dice1, dice2)][1] == 'n' or 
+                    (self.allSpaces[i + max(dice1, dice2)][1] == 'p' and 
+                     self.allSpaces[i + max(dice1, dice2)][0] == 1 )) :
+                    t = True
+                else :
+                    i += 1  
+            else:
+                i += 1
+                
+        if (t == True) :
+            self.make_move(i, max(dice1, dice2))
+            self.make_move(i + dif, min(dice1, dice2))
+            print "Made gaaate!"
+            return True
+        else :
+            return False
+            
     
     def compute_move(self, dices) :
         if (dices[0] == dices[1]) :
@@ -81,13 +108,18 @@ class Board:
             if (self.check_bar() == False) :
                 # compute move
                 print "You can compute your move normally"
-                dice_index = dice_usage.index(False)
-                self.go_towards_house(dices[dice_index])
-                dice_usage[dice_index] = True
+                if (dices[0] != dices[1] and dice_usage[0] == False and dice_usage[1] == False and 
+                    self.make_gate(dices[0], dices[1]) == True) :
+                        print "Made gaaate!"
+                        dice_usage[1] = True
+                        dice_usage[0] = True
+                else:
+                    dice_index = dice_usage.index(False)
+                    self.go_towards_house(dices[dice_index])
+                    dice_usage[dice_index] = True
             else :
                 # try to move piece from bar
-                print "You have to move your piece(s) from the bar first"
-                
+                print "You have to move your piece(s) from the bar first"           
         return
     
     def valid_player_move(self, col, n) :
