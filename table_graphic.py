@@ -59,7 +59,7 @@ class Table(object):
         self.table_height = temp_height
 
     def draw_pieces(self, init = False):
-        width = self.temp_width['triangle']
+        width = self.temp_width['triangle'] * conf.PIECE_SIZE_PERCENTAGE
 
         offset_x_pc = self.offset_x['half'][0] + width / 2
         offset_y_px = self.offset_y['half'][1] + width / 2
