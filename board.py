@@ -85,3 +85,12 @@ class Board:
                 destination[0] += 1
                 destination[1] = self.player
         return True
+
+    def get_spaces(self):
+        return self.allSpaces
+
+    def get_player(self):
+        return self.player
+
+    def get_computer(self):
+        return self.computer

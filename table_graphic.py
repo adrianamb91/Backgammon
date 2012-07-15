@@ -9,9 +9,12 @@ import gradient
 
 class Table(object):
     PLAYER = 'white'
+    COMPUTER = 'black'
 
     def __init__(self, width, height, board):
         self.board = board
+        self.player_colors = { board.get_computer() : self.COMPUTER,
+                               board.get_player() : self.PLAYER}
         self.offset_x = {}
         self.offset_y = {}
         self.temp_width = {}
@@ -85,8 +88,6 @@ class Table(object):
         shadow_thickness = width * conf.PIECE_SHADOW_THICKNESS
         actual_width = width - shadow_thickness + 1
 
-        color = {'c' : 'black', 'p' : 'white'}
-
         if init:
             self.pieces = []
             self.pieces.append([])
@@ -116,8 +117,8 @@ class Table(object):
                 if init:
                     self.pieces[i].append(
                         piece.Piece(
-                            offset_x_pc, offset_y_pc, width, color[spaces[i][1]],
-                            j == piece_nr - 1 and color[spaces[i][1]] == self.PLAYER))
+                            offset_x_pc, offset_y_pc, width, self.player_colors[spaces[i][1]],
+                            j == piece_nr - 1 and self.player_colors[spaces[i][1]] == self.PLAYER))
                 else:
                     self.pieces[i][j].draw(offset_x_pc, offset_y_pc, width,
                             j == piece_nr - 1 and self.pieces[i][j].color == self.PLAYER)
