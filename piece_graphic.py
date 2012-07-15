@@ -14,6 +14,7 @@ class Piece(object):
 
     hover = False
     selected = False
+    selectable = False
     colors = { 'white' :
                         {'shadow_start' : conf.PIECE_WHITE_SHADOW_START_COLOR,
                          'shadow_end' : conf.PIECE_WHITE_SHADOW_END_COLOR,
@@ -25,29 +26,34 @@ class Piece(object):
                          'border' : conf.PIECE_BLACK_BORDER_COLOR,
                          'inner'  : conf.PIECE_BLACK_INNER_COLOR}}
 
-    def __init__(self, x, y, width, color):
+    def __init__(self, x, y, width, color, selectable):
         self.color = color
         self.selector_parts = []
-        self.draw(x, y, width, True)
+        self.selectable = selectable
+        self.draw(x, y, width, selectable, True)
 
     def render(self):
-        self.shadow.render()
         for part in self.parts:
             part.render()
 
+    def render_effects(self):
+        self.shadow.render()
+
+    def render_extras(self):
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
         for part in self.selector_parts:
             part.draw(pyglet.gl.GL_LINE_LOOP)
         pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
 
-    def draw(self, x, y, width, init = False):
+    def draw(self, x, y, width, selectable, init = False):
         self.x = x
         self.y = y
-        self.width = width
+        self.selectable = selectable
         piece_width = []
         self.piece_shadow_thickness = width * conf.PIECE_SHADOW_THICKNESS
         piece_width.append(width - self.piece_shadow_thickness)
+        self.width = piece_width[0]
         piece_shadow = width
         piece_border = piece_width[0] * conf.PIECE_BORDER_THICKNESS
         piece_width.append(piece_width[0] - piece_border * 2)
@@ -92,7 +98,7 @@ class Piece(object):
             part.delete()
         self.selector_parts = []
         
-        start_radius = (self.width + self.width * conf.PIECE_SELECTOR_SPACING) / 2
+        start_radius = (self.width * (1 + conf.PIECE_SELECTOR_SPACING)) / 2
         delta_radius = self.width * conf.PIECE_SELECTOR_THICKNESS
 
         levels = int(abs(delta_radius) + 1)
@@ -124,22 +130,50 @@ class Piece(object):
                                             ('c4f', color_array)))
 
     def mouse_motion(self, x, y, dx, dy):
-        radius = (self.width / 2) ** 2
-        dist = (x - self.x) * (x - self.x) + (y - self.y) * (y - self.y)
+        if self.selectable:
+            radius = (self.width / 2) ** 2
+            dist = (x - self.x) * (x - self.x) + (y - self.y) * (y - self.y)
 
-        if dist < radius:
-            if not self.hover:
-                self.hover = True
-                self.CURRENT = Piece.HOVER
-                self.draw_selector()
-        else:
-            if self.hover:
-                self.hover = False
-                self.CURRENT = Piece.NONE
-                self.draw_selector()
+            if dist < radius:
+                if not self.hover:
+                    self.hover = True
+                    if not self.selected:
+                        self.CURRENT = Piece.HOVER
+                        self.draw_selector()
+            else:
+                if self.hover:
+                    self.hover = False
+                    if not self.selected:
+                        self.CURRENT = Piece.NONE
+                        self.draw_selector()
 
-        if self.hover: return True
-        else: return False
+            if self.hover: return True
+            else: return False
+        return False
+
+    def mouse_press_left(self, x, y):
+        if self.selectable:
+            radius = (self.width / 2) ** 2
+            dist = (x - self.x) * (x - self.x) + (y - self.y) * (y - self.y)
+
+            if dist < radius:
+                if not self.selected:
+                    self.selected = True
+                    self.CURRENT = Piece.SELECTED
+                    self.draw_selector()
+                else:
+                    self.selected = False
+                    self.CURRENT = Piece.HOVER
+                    self.draw_selector()
+            else:
+                if self.selected:
+                    self.selected = False
+                    self.CURRENT = Piece.NONE
+                    self.draw_selector()
+
+            if self.hover: return True
+            else: return False
+        return False
 
 if __name__ == '__main__':
     print "Please import me, do not run me directly!"

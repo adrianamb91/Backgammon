@@ -8,7 +8,10 @@ import gradient
 
 
 class Table(object):
-    def __init__(self, width, height):
+    PLAYER = 'white'
+
+    def __init__(self, width, height, board):
+        self.board = board
         self.offset_x = {}
         self.offset_y = {}
         self.temp_width = {}
@@ -32,8 +35,16 @@ class Table(object):
             label.render()
         for label_text in self.labels_text:
             label_text.draw()
-        for p in self.pieces:
-            p.render()
+
+        for col in self.pieces:
+            for p in col:
+                p.render_effects()
+        for col in self.pieces:
+            for p in col:
+                p.render()
+        for col in self.pieces:
+            for p in col:
+                p.render_extras()
 
     def draw(self, w, h, init = False):
         self.width = w
@@ -49,9 +60,15 @@ class Table(object):
         self.draw_pieces(init)
 
     def mouse_motion(self, x, y, dx, dy):
-        for p in self.pieces:
-            if p.mouse_motion(x, y, dx, dy):
-                return True
+        for col in self.pieces:
+            for p in col:
+                if p.mouse_motion(x, y, dx, dy):
+                    return True
+
+    def mouse_press_left(self, x, y):
+        for col in self.pieces:
+            for p in col:
+                p.mouse_press_left(x, y)
 
     def resize(self):
         temp_width = self.width - conf.BORDER_THICKNESS * 2
@@ -65,17 +82,48 @@ class Table(object):
 
     def draw_pieces(self, init = False):
         width = self.temp_width['triangle'] * conf.PIECE_SIZE_PERCENTAGE
+        shadow_thickness = width * conf.PIECE_SHADOW_THICKNESS
+        actual_width = width - shadow_thickness + 1
 
-        offset_x_pc = self.offset_x['half'][0] + width / 2
-        offset_y_px = self.offset_y['half'][1] + width / 2
+        color = {'c' : 'black', 'p' : 'white'}
 
         if init:
             self.pieces = []
-            self.pieces.append(piece.Piece(200, 200, width, 'white'))
-            self.pieces.append(piece.Piece(400, 200, width, 'black'))
-        else:
-            self.pieces[0].draw(200, 200, width)
-            self.pieces[1].draw(400, 200, width)
+            self.pieces.append([])
+            spaces = self.board.get_spaces()
+
+        for i in range(1, 25):
+            if init: 
+                self.pieces.append([])
+                piece_nr = spaces[i][0]
+            else:
+                piece_nr = len(self.pieces[i])
+
+            for j in range(piece_nr):
+                pos = (i - 1)
+                if 0 <= pos <= 5 or 18 <= pos <= 23:
+                    half = 0
+                else: half = 1
+                factor_w = pos % 6
+
+                if pos < 12:
+                    offset_x_pc = self.offset_x['half'][half] + self.temp_width['triangle'] / 2 + self.temp_width['triangle'] * factor_w
+                    offset_y_pc = self.offset_y['half'][half] + actual_width / 2 + actual_width * j
+                else:
+                    offset_x_pc = self.offset_x['half'][half] + self.temp_width['half'] - self.temp_width['triangle'] / 2 - self.temp_width['triangle'] * factor_w
+                    offset_y_pc = self.offset_y['half'][half] + self.temp_height['half'] - actual_width / 2 - actual_width * j
+
+                if init:
+                    self.pieces[i].append(
+                        piece.Piece(
+                            offset_x_pc, offset_y_pc, width, color[spaces[i][1]],
+                            j == piece_nr - 1 and color[spaces[i][1]] == self.PLAYER))
+                else:
+                    self.pieces[i][j].draw(offset_x_pc, offset_y_pc, width,
+                            j == piece_nr - 1 and self.pieces[i][j].color == self.PLAYER)
+
+            if init: self.pieces.append([])
+
 
     def draw_canvas(self, init = False):
         vertex_array = [(0, 0),

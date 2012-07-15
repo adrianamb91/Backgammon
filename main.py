@@ -3,7 +3,7 @@ from pyglet.gl import *
 import primitives
 import backgammon_config as conf
 import table_graphic
-
+import board
 
 class BackgammonWindow(pyglet.window.Window):
     def __init__(self, config):
@@ -16,7 +16,8 @@ class BackgammonWindow(pyglet.window.Window):
         self.cursor_hand = self.get_system_mouse_cursor(self.CURSOR_HAND)
         self.cursor_default = self.get_system_mouse_cursor(self.CURSOR_DEFAULT)
 
-        self.GAME_TABLE = table_graphic.Table(self.width, self.height)
+        self.BOARD = board.Board()
+        self.GAME_TABLE = table_graphic.Table(self.width, self.height, self.BOARD)
         #self.MENU = menu_graphic.Menu()
 
         self.CURRENT_SCREEN = self.GAME_TABLE
@@ -35,6 +36,10 @@ class BackgammonWindow(pyglet.window.Window):
         else:
             self.set_mouse_cursor(self.cursor_default)
 
+    def on_mouse_release(self, x, y, button, modifiers):
+        if button == pyglet.window.mouse.LEFT:
+            self.CURRENT_SCREEN.mouse_press_left(x, y)
+
 if __name__ == '__main__':
     try:
         config = Config(alpha_size = 8, sample_buffers = 1, samples = 4,
@@ -43,5 +48,5 @@ if __name__ == '__main__':
     except pyglet.window.NoSuchConfigException:
         print "Smooth contex could not be aquired."
         window = BackgammonWindow(None)
-        
+
     pyglet.app.run()

@@ -160,6 +160,6 @@ class Board:
                 destination[0] += 1
                 destination[1] = 'p'
         return True
-                                  
-                
-            
+
+    def get_spaces(self):
+        return self.allSpaces
