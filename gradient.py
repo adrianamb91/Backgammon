@@ -78,7 +78,7 @@ class RectGradient(Gradient):
         Gradient.draw(self)
 
         delta_radius = end_radius - start_radius
-        levels = int(abs(delta_radius))
+        levels = int(abs(delta_radius) + 1)
         radius_step = delta_radius / abs(delta_radius)
 
         red_step = (self.end_color[0] - self.start_color[0]) / levels

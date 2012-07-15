@@ -7,28 +7,39 @@ import math
 import gradient
 
 class Piece(object):
+    NONE = conf.PIECE_SELECTOR_NONE
+    HOVER = conf.PIECE_SELECTOR_HOVER
+    SELECTED = conf.PIECE_SELECTOR_SELECTED
+    CURRENT = conf.PIECE_SELECTOR_NONE
+
+    hover = False
     selected = False
     colors = { 'white' :
                         {'shadow_start' : conf.PIECE_WHITE_SHADOW_START_COLOR,
                          'shadow_end' : conf.PIECE_WHITE_SHADOW_END_COLOR,
                          'border' : conf.PIECE_WHITE_BORDER_COLOR,
-                         'inner'  : conf.PIECE_WHITE_INNER_COLOR,
-                         'select' : conf.PIECE_WHITE_SELECT_COLOR},
+                         'inner'  : conf.PIECE_WHITE_INNER_COLOR},
                'black' :
                         {'shadow_start' : conf.PIECE_BLACK_SHADOW_START_COLOR,
                          'shadow_end' : conf.PIECE_BLACK_SHADOW_END_COLOR,
                          'border' : conf.PIECE_BLACK_BORDER_COLOR,
-                         'inner'  : conf.PIECE_BLACK_INNER_COLOR,
-                         'select' : conf.PIECE_BLACK_SELECT_COLOR}}
+                         'inner'  : conf.PIECE_BLACK_INNER_COLOR}}
 
     def __init__(self, x, y, width, color):
         self.color = color
+        self.selector_parts = []
         self.draw(x, y, width, True)
 
     def render(self):
         self.shadow.render()
         for part in self.parts:
             part.render()
+
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
+        for part in self.selector_parts:
+            part.draw(pyglet.gl.GL_LINE_LOOP)
+        pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
 
     def draw(self, x, y, width, init = False):
         self.x = x
@@ -74,20 +85,61 @@ class Piece(object):
                 self.parts[i].x = x
                 self.parts[i].y = y
 
+        self.draw_selector()
+
+    def draw_selector(self):
+        for part in self.selector_parts:
+            part.delete()
+        self.selector_parts = []
+        
+        start_radius = (self.width + self.width * conf.PIECE_SELECTOR_SPACING) / 2
+        delta_radius = self.width * conf.PIECE_SELECTOR_THICKNESS
+
+        levels = int(abs(delta_radius) + 1)
+        radius_step = 1
+
+        points = 360
+        angle_step = math.pi * 2 / points
+
+        vertex_array = []
+        color_array = []
+
+        for i in range(levels):
+            radius = start_radius + i * radius_step
+            vertex_array = []
+            color_array = []
+
+            for j in range(points):
+                w = radius * math.cos(angle_step * j)
+                h = radius * math.sin(angle_step * j)
+
+                vertex_array.append(self.x + w)
+                vertex_array.append(self.y + h)
+                for c in self.CURRENT:
+                    color_array.append(c)
+
+            self.selector_parts.append(
+                pyglet.graphics.vertex_list(points,
+                                            ('v2f', vertex_array),
+                                            ('c4f', color_array)))
+
     def mouse_motion(self, x, y, dx, dy):
-        pass
-#        radius = (self.width / 2) ** 2
-#        dist = (x - self.x) * (x - self.x) + (y - self.y) * (y - self.y)
-#        if dist < radius:
-#            if not self.selected:
-#                self.selected = True
-#                self.draw_shadow(self.x, self.y, self.colors[self.color]['select'],
-#                            self.width, self.width - self.piece_shadow_thickness)
-#        else:
-#            if self.selected:
-#                self.selected = False
-#                self.draw_shadow(self.x, self.y, self.colors[self.color]['shadow'],
-#                            self.width, self.width - self.piece_shadow_thickness)
+        radius = (self.width / 2) ** 2
+        dist = (x - self.x) * (x - self.x) + (y - self.y) * (y - self.y)
+
+        if dist < radius:
+            if not self.hover:
+                self.hover = True
+                self.CURRENT = Piece.HOVER
+                self.draw_selector()
+        else:
+            if self.hover:
+                self.hover = False
+                self.CURRENT = Piece.NONE
+                self.draw_selector()
+
+        if self.hover: return True
+        else: return False
 
 if __name__ == '__main__':
     print "Please import me, do not run me directly!"

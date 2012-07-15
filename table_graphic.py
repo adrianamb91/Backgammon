@@ -19,13 +19,15 @@ class Table(object):
     def render(self):
         self.background.render()
         self.table_border.render()
-        self.table_border_gradient.render()
+        self.table_border_shadow.render()
         for half_3d in self.halves_3d:
             half_3d.render()
         for half_bg in self.halves_bg:
             half_bg.render()
         for triangle in self.triangles:
             triangle.render()
+        for half_bg_shadow in self.halves_bg_shadow:
+            half_bg_shadow.render()
         for label in self.labels:
             label.render()
         for label_text in self.labels_text:
@@ -48,7 +50,8 @@ class Table(object):
 
     def mouse_motion(self, x, y, dx, dy):
         for p in self.pieces:
-            p.mouse_motion(x, y, dx, dy)
+            if p.mouse_motion(x, y, dx, dy):
+                return True
 
     def resize(self):
         temp_width = self.width - conf.BORDER_THICKNESS * 2
@@ -89,7 +92,7 @@ class Table(object):
         self.offset_x['global'] = (self.width - self.table_width) / 2
         self.offset_y['global'] = (self.height - self.table_height) / 2
         self.inner_border_thickness = self.table_width * conf.INNER_BORDER_THICKNESS
-        gradient_end = self.inner_border_thickness * conf.TABLE_BORDER_GRADIENT_THICKNESS
+        gradient_end = self.inner_border_thickness * conf.TABLE_BORDER_SHADOW_THICKNESS
 
         vertex_array = [(self.offset_x['global'], self.offset_y['global']),
                         (self.offset_x['global'] + self.table_width,
@@ -101,7 +104,7 @@ class Table(object):
         if init:
             self.table_border = primitives.Polygon(v = vertex_array,
                                                 color = conf.TABLE_BORDER_COLOR)
-            self.table_border_gradient = gradient.RectGradient(
+            self.table_border_shadow = gradient.RectGradient(
                                 self.offset_x['global'], self.offset_y['global'],
                                 self.table_width, self.table_height,
                                 conf.TABLE_BORDER_SHADOW_START_COLOR,
@@ -109,7 +112,7 @@ class Table(object):
                                 0, gradient_end)
         else:
             self.table_border.v = vertex_array
-            self.table_border_gradient.draw(
+            self.table_border_shadow.draw(
                                 self.offset_x['global'], self.offset_y['global'],
                                 self.table_width, self.table_height,
                                 0, gradient_end)
@@ -117,6 +120,7 @@ class Table(object):
     def draw_table_3d(self, init = False):
         self.temp_width['illusion'] = self.table_width / 2 - self.inner_border_thickness * 2
         self.temp_height['illusion'] = self.table_height - self.inner_border_thickness * 2
+        self.inner_3d_thickness = self.table_width * conf.INNER_3D_THICKNESS
 
         if init:
             self.halves_3d = []
@@ -124,28 +128,31 @@ class Table(object):
         for i in range(2):
             offset_x_il = self.offset_x['global'] + self.temp_width['illusion'] * i + self.inner_border_thickness * (2 * i + 1)
             offset_y_il = self.offset_y['global'] + self.inner_border_thickness
-            vertex_array = [(offset_x_il, offset_y_il),
-                            (offset_x_il + self.temp_width['illusion'], 
-                                offset_y_il),
-                            (offset_x_il + self.temp_width['illusion'], 
-                                offset_y_il + self.temp_height['illusion']),
-                            (offset_x_il, 
-                                offset_y_il + self.temp_height['illusion'])]
 
             if init:
-                self.halves_3d.append(primitives.Polygon(v = vertex_array,
-                                                    color = conf.TABLE_HALF_3D_COLOR))
+                self.halves_3d.append(gradient.RectGradient(
+                                offset_x_il, offset_y_il,
+                                self.temp_width['illusion'], self.temp_height['illusion'],
+                                conf.TABLE_HALF_3D_SHADOW_START_COLOR,
+                                conf.TABLE_HALF_3D_SHADOW_END_COLOR,
+                                0, self.inner_3d_thickness))
             else:
-                self.halves_3d[i].v = vertex_array
+                self.halves_3d[i].draw(offset_x_il, offset_y_il,
+                                self.temp_width['illusion'], self.temp_height['illusion'],
+                                0, self.inner_3d_thickness)
 
     def draw_table_halves(self, init = False):
-        inner_3d_thickness = self.table_width * conf.INNER_3D_THICKNESS
-        thickness = self.inner_border_thickness + inner_3d_thickness
-        self.temp_width['half'] = self.temp_width['illusion'] - inner_3d_thickness * 2
-        self.temp_height['half'] = self.temp_height['illusion'] - inner_3d_thickness * 2
+        thickness = self.inner_border_thickness + self.inner_3d_thickness
+        self.temp_width['half'] = self.temp_width['illusion'] - self.inner_3d_thickness * 2
+        self.temp_height['half'] = self.temp_height['illusion'] - self.inner_3d_thickness * 2
+        if self.temp_width['half'] < self.temp_height['half']:
+            gradient_end = self.temp_width['half'] * conf.TABLE_HALF_BG_SHADOW_THICKNESS
+        else:
+            gradient_end = self.temp_height['half'] * conf.TABLE_HALF_BG_SHADOW_THICKNESS
 
         if init:
             self.halves_bg = []
+            self.halves_bg_shadow = []
 
         self.offset_x['half'] = []
         self.offset_y['half'] = []
@@ -163,8 +170,18 @@ class Table(object):
             if init:
                 self.halves_bg.append(primitives.Polygon(v = vertex_array,
                                                     color = conf.TABLE_HALF_BG_COLOR))
+                self.halves_bg_shadow.append(gradient.RectGradient(
+                                self.offset_x['half'][i], self.offset_y['half'][i],
+                                self.temp_width['half'], self.temp_height['half'],
+                                conf.TABLE_HALF_BG_SHADOW_START_COLOR,
+                                conf.TABLE_HALF_BG_SHADOW_END_COLOR,
+                                0, gradient_end))
             else:
                 self.halves_bg[i].v = vertex_array
+                self.halves_bg_shadow[i].draw(
+                                self.offset_x['half'][i], self.offset_y['half'][i],
+                                self.temp_width['half'], self.temp_height['half'],
+                                0, gradient_end)
 
     def draw_table_triangles(self, init = False):
         draw_color = 0

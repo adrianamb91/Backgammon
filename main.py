@@ -13,6 +13,9 @@ class BackgammonWindow(pyglet.window.Window):
                       conf.RELATIVE_HEIGHT + conf.BORDER_THICKNESS * 2)
         self.set_caption('Backgammon')
 
+        self.cursor_hand = self.get_system_mouse_cursor(self.CURSOR_HAND)
+        self.cursor_default = self.get_system_mouse_cursor(self.CURSOR_DEFAULT)
+
         self.GAME_TABLE = table_graphic.Table(self.width, self.height)
         #self.MENU = menu_graphic.Menu()
 
@@ -27,7 +30,10 @@ class BackgammonWindow(pyglet.window.Window):
         self.CURRENT_SCREEN.draw(w = width, h = height)
 
     def on_mouse_motion(self, x, y, dx, dy):
-        self.CURRENT_SCREEN.mouse_motion(x, y, dx, dy)
+        if self.CURRENT_SCREEN.mouse_motion(x, y, dx, dy):
+            self.set_mouse_cursor(self.cursor_hand)
+        else:
+            self.set_mouse_cursor(self.cursor_default)
 
 if __name__ == '__main__':
     try:
