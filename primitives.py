@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 """
 Implementing 2D drawing primitives using
 pyglet.gl

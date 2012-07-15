@@ -1,6 +1,7 @@
 import pyglet
 from pyglet.gl import *
 import primitives
+import primitives2 as pm
 import backgammon_config as conf
 import math
 import piece_graphic as piece
@@ -22,10 +23,26 @@ class Table(object):
 
         self.draw(width, height, True)
 
+
+    def mouse_motion(self, x, y, dx, dy):
+        for col in self.pieces:
+            for p in col:
+                if p.mouse_motion(x, y, dx, dy):
+                    return True
+
+
+    def mouse_press_left(self, x, y):
+        for col in self.pieces:
+            for p in col:
+                p.mouse_press_left(x, y)
+
+
     def render(self):
         self.background.render()
+
         self.table_border.render()
         self.table_border_shadow.render()
+
         for half_3d in self.halves_3d:
             half_3d.render()
         for half_bg in self.halves_bg:
@@ -34,6 +51,7 @@ class Table(object):
             triangle.render()
         for half_bg_shadow in self.halves_bg_shadow:
             half_bg_shadow.render()
+
         for label in self.labels:
             label.render()
         for label_text in self.labels_text:
@@ -49,6 +67,7 @@ class Table(object):
             for p in col:
                 p.render_extras()
 
+
     def draw(self, w, h, init = False):
         self.width = w
         self.height = h
@@ -62,16 +81,6 @@ class Table(object):
         self.draw_table_home_labels(init)
         self.draw_pieces(init)
 
-    def mouse_motion(self, x, y, dx, dy):
-        for col in self.pieces:
-            for p in col:
-                if p.mouse_motion(x, y, dx, dy):
-                    return True
-
-    def mouse_press_left(self, x, y):
-        for col in self.pieces:
-            for p in col:
-                p.mouse_press_left(x, y)
 
     def resize(self):
         temp_width = self.width - conf.BORDER_THICKNESS * 2
@@ -82,6 +91,7 @@ class Table(object):
 
         self.table_width = temp_width
         self.table_height = temp_height
+
 
     def draw_pieces(self, init = False):
         width = self.temp_width['triangle'] * conf.PIECE_SIZE_PERCENTAGE
@@ -127,15 +137,11 @@ class Table(object):
 
 
     def draw_canvas(self, init = False):
-        vertex_array = [(0, 0),
-                        (self.width, 0),
-                        (self.width, self.height),
-                        (0, self.height)]
         if init:
-            self.background = primitives.Polygon(v = vertex_array,
-                                        color = conf.BG_COLOR, style = 0)
+            self.background = pm.Rect(0, 0, self.width, self.height, conf.BG_COLOR)
         else:
-            self.background.v = vertex_array
+            self.background.draw(0, 0, self.width, self.height, conf.BG_COLOR)
+
 
     def draw_table_border(self, init = False):
         self.offset_x['global'] = (self.width - self.table_width) / 2
@@ -143,28 +149,32 @@ class Table(object):
         self.inner_border_thickness = self.table_width * conf.INNER_BORDER_THICKNESS
         gradient_end = self.inner_border_thickness * conf.TABLE_BORDER_SHADOW_THICKNESS
 
-        vertex_array = [(self.offset_x['global'], self.offset_y['global']),
-                        (self.offset_x['global'] + self.table_width,
-                            self.offset_y['global']),
-                        (self.offset_x['global'] + self.table_width,
-                            self.offset_y['global'] + self.table_height),
-                        (self.offset_x['global'], 
-                            self.offset_y['global'] + self.table_height)]
         if init:
-            self.table_border = primitives.Polygon(v = vertex_array,
-                                                color = conf.TABLE_BORDER_COLOR)
+            self.table_border = pm.Rect(self.offset_x['global'],
+                                        self.offset_y['global'],
+                                        self.table_width,
+                                        self.table_height,
+                                        conf.TABLE_BORDER_COLOR)
+
             self.table_border_shadow = gradient.RectGradient(
                                 self.offset_x['global'], self.offset_y['global'],
                                 self.table_width, self.table_height,
                                 conf.TABLE_BORDER_SHADOW_START_COLOR,
                                 conf.TABLE_BORDER_SHADOW_END_COLOR,
                                 0, gradient_end)
+
         else:
-            self.table_border.v = vertex_array
+            self.table_border.draw(self.offset_x['global'],
+                                    self.offset_y['global'],
+                                    self.table_width,
+                                    self.table_height,
+                                    conf.TABLE_BORDER_COLOR)
+
             self.table_border_shadow.draw(
                                 self.offset_x['global'], self.offset_y['global'],
                                 self.table_width, self.table_height,
                                 0, gradient_end)
+
 
     def draw_table_3d(self, init = False):
         self.temp_width['illusion'] = self.table_width / 2 - self.inner_border_thickness * 2
@@ -190,6 +200,7 @@ class Table(object):
                                 self.temp_width['illusion'], self.temp_height['illusion'],
                                 0, self.inner_3d_thickness)
 
+
     def draw_table_halves(self, init = False):
         thickness = self.inner_border_thickness + self.inner_3d_thickness
         self.temp_width['half'] = self.temp_width['illusion'] - self.inner_3d_thickness * 2
@@ -208,17 +219,14 @@ class Table(object):
         for i in range(2):
             self.offset_x['half'].append(self.offset_x['global'] + self.temp_width['half'] * i + thickness * (2 * i + 1))
             self.offset_y['half'].append(self.offset_y['global'] + thickness)
-            vertex_array = [(self.offset_x['half'][i], self.offset_y['half'][i]),
-                            (self.offset_x['half'][i] + self.temp_width['half'],
-                                self.offset_y['half'][i]),
-                            (self.offset_x['half'][i] + self.temp_width['half'],
-                                self.offset_y['half'][i] + self.temp_height['half']),
-                            (self.offset_x['half'][i],
-                                self.offset_y['half'][i] + self.temp_height['half'])]
 
             if init:
-                self.halves_bg.append(primitives.Polygon(v = vertex_array,
-                                                    color = conf.TABLE_HALF_BG_COLOR))
+                self.halves_bg.append(pm.Rect(self.offset_x['half'][i],
+                                                self.offset_y['half'][i],
+                                                self.temp_width['half'],
+                                                self.temp_height['half'],
+                                                conf.TABLE_HALF_BG_COLOR))
+
                 self.halves_bg_shadow.append(gradient.RectGradient(
                                 self.offset_x['half'][i], self.offset_y['half'][i],
                                 self.temp_width['half'], self.temp_height['half'],
@@ -226,11 +234,17 @@ class Table(object):
                                 conf.TABLE_HALF_BG_SHADOW_END_COLOR,
                                 0, gradient_end))
             else:
-                self.halves_bg[i].v = vertex_array
+                self.halves_bg[i].draw(self.offset_x['half'][i],
+                                        self.offset_y['half'][i],
+                                        self.temp_width['half'],
+                                        self.temp_height['half'],
+                                        conf.TABLE_HALF_BG_COLOR)
+
                 self.halves_bg_shadow[i].draw(
                                 self.offset_x['half'][i], self.offset_y['half'][i],
                                 self.temp_width['half'], self.temp_height['half'],
                                 0, gradient_end)
+
 
     def draw_table_triangles(self, init = False):
         draw_color = 0
@@ -261,10 +275,12 @@ class Table(object):
                                         self.offset_y['tr_quarter'][i*2 + j] + self.temp_height['triangle'] * triangle_pos)]
 
                     if init:
-                        self.triangles.append(primitives.Polygon(v = vertex_array,
-                                            color = colors[draw_color]))
+                        self.triangles.append(pm.Polygon(vertex_array,
+                                                        colors[draw_color]))
                     else:
-                        self.triangles[i * 12 + j * 6 + k].v = vertex_array
+                        self.triangles[i * 12 + j * 6 + k].draw(
+                                                        vertex_array,
+                                                        colors[draw_color])
 
                     draw_color += 1
                     if draw_color > 1: draw_color = 0
@@ -272,6 +288,7 @@ class Table(object):
             draw_color += 1
             if draw_color > 1: draw_color = 0
             triangle_pos *= -1
+
 
     def draw_table_home_labels(self, init = False):
         #Draw home labels background.
