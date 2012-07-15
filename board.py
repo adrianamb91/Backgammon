@@ -1,126 +1,51 @@
-class Board:  
-    allSpaces = []
+import random
+
+class Board: 
+     
+    allSpaces = []   
+    dices = []
+    
+    computer = 'computer'
+    player = 'player'
+    empty = 'nobody'
+    
     def __init__(self):
         for i in range(25):
-            self.allSpaces.insert(i, (0, 'n')) # n = nothing
+            self.allSpaces.insert(i, (0, self.empty)) # n = nothing
             
-        self.allSpaces[0] = (0, 'c', 0, 'p') # bar
-        self.allSpaces[1] = (2, 'c') # c = computer, p = player
-        self.allSpaces[6] = (5, 'p')
-        self.allSpaces[8] = (3, 'p')
-        self.allSpaces[12] = (5, 'c')
-        self.allSpaces[13] = (5, 'p')
-        self.allSpaces[17] = (3, 'c')
-        self.allSpaces[19] = (5, 'c')
-        self.allSpaces[24] = (2, 'p')
+        self.allSpaces[0] = (0, self.computer, 0, self.player) # bar
+        self.allSpaces[1] = (2, self.computer) # c = computer, p = player
+        self.allSpaces[6] = (5, self.player)
+        self.allSpaces[8] = (3, self.player)
+        self.allSpaces[12] = (5, self.computer)
+        self.allSpaces[13] = (5, self.player)
+        self.allSpaces[17] = (3, self.computer)
+        self.allSpaces[19] = (5, self.computer)
+        self.allSpaces[24] = (2, self.player)
         
         for i in range(25) :
             self.allSpaces[i] = list(self.allSpaces[i])
             
-            
-    def make_move(self, col, n) :
-        source = self.allSpaces[col]
-        if (col > 0 and (source[0] == 0 or 'c' != source[1])) :
-            print "Invalid move - invalid source"
-            return False
-        elif (col+n < 0) :
-            print "Invalid move - invalid destination"
-            return False
+        return
+    
+    def generate_dices(self):
+        dice1 = random.randint(1, 6)
+        dice2 = random.randint(1, 6) 
+        
+        if (dice1 == dice2) :
+            self.dices = [dice1, dice1, dice1, dice1]
         else:
-            destination = self.allSpaces[col+n]
-            if (destination[1] == 'n' or destination[1] == 'c') :
-                source[0] -= 1
-                destination[0] += 1
-                destination[1] = 'c'
-                if (source[0] == 0) :
-                    source[1] = 'n'
-            else:
-                if (destination[0] > 1) :
-                    print "Invalid move - occupied"
-                    return False
-                else:
-                    bar = self.allSpaces[0]
-                    if (destination[1] == 'p') :
-                        bar[2] += 1
-                    destination[1] = 'c'
-                    source[0] -= 1
-                    if (source[0] == 0) :
-                        source[1] = 'n'
-                        
-            print "Made move: [", col, " ", n, "]"
-            return True
+            self.dices = [dice1, dice2]
         
-    def check_bar(self) :
-        b = self.allSpaces[0]
-        if (b[0] != 0) :
-            return True
-        return False
+        return self.dices 
     
-    def go_towards_house(self, dice) :
-        i = 1
-        t = False
-        while (t == False and i < 24) :
-            if (self.allSpaces[i][1] != 'c') :
-                i += 1
-            else :
-                if (self.allSpaces[i+dice][1] == 'c' or self.allSpaces[i+dice][1] == 'n' 
-                    or (self.allSpaces[i+dice][1] == 'p' and self.allSpaces[i+dice][0] == 1)) :
-                    t = True
-                else :
-                    i += 1
-        if (t == True) :
-            self.make_move(i, dice)
-        return
+    def get_dices(self):
+        return self.dices    
     
-    def make_gate(self, dice1, dice2) :
-        i = 1
-        t = False
-        dif = abs(dice1-dice2)
-        while (t == False and i < 24) :
-            if (self.allSpaces[i][1] == 'c' and self.allSpaces[i+dif][1] == 'c') :
-                #posibila poarta
-                if (self.allSpaces[i + max(dice1, dice2)][1] == 'n' or 
-                    (self.allSpaces[i + max(dice1, dice2)][1] == 'p' and 
-                     self.allSpaces[i + max(dice1, dice2)][0] == 1 )) :
-                    t = True
-                else :
-                    i += 1  
-            else:
-                i += 1
-                
-        if (t == True) :
-            self.make_move(i, max(dice1, dice2))
-            self.make_move(i + dif, min(dice1, dice2))
-            print "Made gaaate!"
-            return True
-        else :
-            return False
-            
+    def printb(self):
+        for i in range(25): 
+            print i, " ", self.allSpaces[i] 
     
-    def compute_move(self, dices) :
-        if (dices[0] == dices[1]) :
-            dice_usage = [False, False, False, False]
-        else :
-            dice_usage = [False, False]
-        
-        while (dice_usage.count(False) != 0) :
-            
-            if (self.check_bar() == False) :
-                # compute move
-                print "You can compute your move normally"
-                if (dices[0] != dices[1] and dice_usage[0] == False and dice_usage[1] == False and 
-                    self.make_gate(dices[0], dices[1]) == True) :
-                        print "Made gaaate!"
-                        dice_usage[1] = True
-                        dice_usage[0] = True
-                else:
-                    dice_index = dice_usage.index(False)
-                    self.go_towards_house(dices[dice_index])
-                    dice_usage[dice_index] = True
-            else :
-                # try to move piece from bar
-                print "You have to move your piece(s) from the bar first"           
-        return
     
     def valid_player_move(self, col, n) :
         bar = self.allSpaces[0]
@@ -132,7 +57,7 @@ class Board:
                 destination = self.allSpaces[25 - n]
             else :
                 destination = self.allSpaces[col - n]
-            if (destination[1] == 'c' and destination[0] > 1) :
+            if (destination[1] == self.computer and destination[0] > 1) :
                 print "Invalid move - destination occupied"
                 return False
         return True
@@ -151,15 +76,12 @@ class Board:
                 source = self.allSpaces[col]
                 source[0] -= 1
                 if (source[0] == 0) :
-                    source[1] = 'n'
+                    source[1] = self.empty
                 destination = self.allSpaces[col - n]
-            if (destination[1] == 'c' and destination[0] == 1) :
-                destination[1] = 'p'
+            if (destination[1] == self.computer and destination[0] == 1) :
+                destination[1] = self.player
                 bar[0] += 1
             else :
                 destination[0] += 1
-                destination[1] = 'p'
+                destination[1] = self.player
         return True
-
-    def get_spaces(self):
-        return self.allSpaces
