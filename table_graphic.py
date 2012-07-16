@@ -5,7 +5,7 @@ import primitives as pm
 import gradient as gr
 import piece_graphic as piece
 
-import backgammon_config as cf
+import table_graphic_config as cf
 
 
 class Table(object):

@@ -6,8 +6,6 @@ import math
 import primitives as pm
 import gradient as gr
 
-#import backgammon_config as cf
-
 class Piece(object):
     NONE = (0, 0, 0, 0)
     HOVER = NONE
