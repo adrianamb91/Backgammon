@@ -1,11 +1,11 @@
 import pyglet
-from pyglet.gl import *
-import primitives
-import primitives2 as pm
-import backgammon_config as conf
 import math
+
+import primitives as pm
+import gradient as gr
 import piece_graphic as piece
-import gradient
+
+import backgammon_config as conf
 
 
 class Table(object):
@@ -54,8 +54,6 @@ class Table(object):
 
         for label in self.labels:
             label.render()
-        for label_text in self.labels_text:
-            label_text.draw()
 
         for col in self.pieces:
             for p in col:
@@ -156,7 +154,7 @@ class Table(object):
                                         self.table_height,
                                         conf.TABLE_BORDER_COLOR)
 
-            self.table_border_shadow = gradient.RectGradient(
+            self.table_border_shadow = gr.RectGradient(
                                 self.offset_x['global'], self.offset_y['global'],
                                 self.table_width, self.table_height,
                                 conf.TABLE_BORDER_SHADOW_START_COLOR,
@@ -179,7 +177,7 @@ class Table(object):
     def draw_table_3d(self, init = False):
         self.temp_width['illusion'] = self.table_width / 2 - self.inner_border_thickness * 2
         self.temp_height['illusion'] = self.table_height - self.inner_border_thickness * 2
-        self.inner_3d_thickness = self.table_width * conf.INNER_3D_THICKNESS
+        self.inner_3d_thickness = self.table_width * conf.TABLE_INNER_3D_THICKNESS
 
         if init:
             self.halves_3d = []
@@ -189,11 +187,11 @@ class Table(object):
             offset_y_il = self.offset_y['global'] + self.inner_border_thickness
 
             if init:
-                self.halves_3d.append(gradient.RectGradient(
+                self.halves_3d.append(gr.RectGradient(
                                 offset_x_il, offset_y_il,
                                 self.temp_width['illusion'], self.temp_height['illusion'],
-                                conf.TABLE_HALF_3D_SHADOW_START_COLOR,
-                                conf.TABLE_HALF_3D_SHADOW_END_COLOR,
+                                conf.TABLE_INNER_3D_SHADOW_START_COLOR,
+                                conf.TABLE_INNER_3D_SHADOW_END_COLOR,
                                 0, self.inner_3d_thickness))
             else:
                 self.halves_3d[i].draw(offset_x_il, offset_y_il,
@@ -227,7 +225,7 @@ class Table(object):
                                                 self.temp_height['half'],
                                                 conf.TABLE_HALF_BG_COLOR))
 
-                self.halves_bg_shadow.append(gradient.RectGradient(
+                self.halves_bg_shadow.append(gr.RectGradient(
                                 self.offset_x['half'][i], self.offset_y['half'][i],
                                 self.temp_width['half'], self.temp_height['half'],
                                 conf.TABLE_HALF_BG_SHADOW_START_COLOR,
@@ -291,63 +289,33 @@ class Table(object):
 
 
     def draw_table_home_labels(self, init = False):
-        #Draw home labels background.
         label_width = self.table_width * conf.HOME_LABEL_WIDTH
         label_height = self.inner_border_thickness * conf.HOME_LABEL_HEIGHT
 
         corner_radius = label_width * conf.HOME_LABEL_CORNER_RADIUS
-        corner_points = (int) (corner_radius * conf.HOME_LABEL_CORNER_POINTS)
-        angle_step = math.pi / 2 / corner_points
-
-        big_offset = [(0, 0), (1, 0), (1, 1), (0, 1)]
-        small_offset = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
+        lb_text = [conf.HOME_LABEL_TEXT_PLAYER, conf.HOME_LABEL_TEXT_COMPUTER]
 
         if init:
             self.labels = []
-            self.labels_text = []
-            lb_text = ["Your home", "Opponent home"]
 
-        for k in range(2):
-            vertex_array = []
-
+        for i in range(2):
             offset_x_lb = self.offset_x['global'] + self.table_width * conf.HOME_LABEL_SPACER
-            offset_y_lb = self.offset_y['global'] + self.table_height * k - self.inner_border_thickness * k + (self.inner_border_thickness - label_height) / 2
-
-            for i in range(4):
-                start_x = offset_x_lb + label_width * big_offset[i][0] + corner_radius * small_offset[i][0]
-                start_y = offset_y_lb + label_height * big_offset[i][1] + corner_radius * small_offset[i][1]
-
-                for j in range(corner_points):
-                    if i == 1 or i == 3: alfa = corner_points - j
-                    else: alfa = j
-
-                    w = corner_radius * math.cos(angle_step * alfa)
-                    h = corner_radius * math.sin(angle_step * alfa)
-                    vertex_array.append((start_x - w * small_offset[i][0],
-                                         start_y - h * small_offset[i][1]))
+            offset_y_lb = self.offset_y['global'] + self.table_height * i - self.inner_border_thickness * i + (self.inner_border_thickness - label_height) / 2
 
             if init:
-                self.labels.append(primitives.Polygon(v = vertex_array,
-                                                color = conf.HOME_LABEL_BG_COLOR))
+                self.labels.append(pm.RoundedLabel(offset_x_lb, offset_y_lb,
+                                   label_width, label_height, corner_radius,
+                                   conf.HOME_LABEL_BG_COLOR, lb_text[i],
+                                   conf.HOME_LABEL_TEXT_PROPORTION,
+                                   conf.HOME_LABEL_TEXT_FONT,
+                                   conf.HOME_LABEL_FG_COLOR))
             else:
-                self.labels[k].v = vertex_array
-
-            offset_x_tx = offset_x_lb + label_width / 2
-            offset_y_tx = offset_y_lb + label_height / 2
-            tx_size = label_height * conf.HOME_LABEL_TEXT_PROPORTION
-
-            if init:
-                self.labels_text.append(pyglet.text.Label(lb_text[k],
-                                        font_name = 'Helvetica',
-                                        font_size = tx_size,
-                                        bold = True,
-                                        color = conf.HOME_LABEL_FG_COLOR,
-                                        x = offset_x_tx, y = offset_x_tx,
-                                        anchor_x = 'center', anchor_y = 'center'))
-            else:
-                self.labels_text[k].x = offset_x_tx
-                self.labels_text[k].y = offset_y_tx
-                self.labels_text[k].font_size = tx_size
+                self.labels[i].draw(offset_x_lb, offset_y_lb,
+                                   label_width, label_height, corner_radius,
+                                   conf.HOME_LABEL_BG_COLOR, lb_text[i],
+                                   conf.HOME_LABEL_TEXT_PROPORTION,
+                                   conf.HOME_LABEL_TEXT_FONT,
+                                   conf.HOME_LABEL_FG_COLOR)
 
 if __name__ == '__main__':
-    "Please import me, do not run me directly!"
+    "Please do not run this file directly, include it."

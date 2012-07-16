@@ -21,7 +21,11 @@ class Gradient(object):
             part.delete()
         self.gradient_parts = []
 
+
 class CircularGradient(Gradient):
+    points = 180
+    angle_step = math.pi * 2 / points
+
     def __init__(self, x, y, start_color, end_color, start_radius, end_radius):
         Gradient.__init__(self, start_color, end_color)
         self.draw(x, y, start_radius, end_radius)
@@ -32,9 +36,6 @@ class CircularGradient(Gradient):
         delta_radius = end_radius - start_radius
         levels = int(abs(delta_radius) * 1.3)
         radius_step = delta_radius / abs(delta_radius)
-
-        points = 360
-        angle_step = math.pi * 2 / points
 
         red_step = (self.end_color[0] - self.start_color[0]) / levels
         green_step = (self.end_color[1] - self.start_color[1]) / levels
@@ -55,9 +56,9 @@ class CircularGradient(Gradient):
             color_array = []
             
             
-            for j in range(points):
-                w = radius * math.cos(angle_step * j)
-                h = radius * math.sin(angle_step * j)
+            for j in range(self.points):
+                w = radius * math.cos(self.angle_step * j)
+                h = radius * math.sin(self.angle_step * j)
 
                 vertex_array.append(x + w)
                 vertex_array.append(y + h)
@@ -65,9 +66,10 @@ class CircularGradient(Gradient):
                     color_array.append(c)
 
             self.gradient_parts.append(
-                pyglet.graphics.vertex_list(points,
+                pyglet.graphics.vertex_list(self.points,
                                             ('v2f', vertex_array),
                                             ('c4f', color_array)))
+
 
 class RectGradient(Gradient):
     def __init__(self, x, y, width, height, start_color, end_color, start_radius, end_radius):
@@ -112,5 +114,6 @@ class RectGradient(Gradient):
                                             ('v2f', vertex_array),
                                             ('c4f', color_array)))
 
+
 if __name__ == '__main__':
-    print "Please import me, do not run me directly!"
+    "Please do not run this file directly, include it."
