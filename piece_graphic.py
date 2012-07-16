@@ -26,11 +26,13 @@ class Piece(object):
                     {'shadow_start' : self.cf.PIECE_WHITE_SHADOW_START_COLOR,
                     'shadow_end' : self.cf.PIECE_WHITE_SHADOW_END_COLOR,
                     'border' : self.cf.PIECE_WHITE_BORDER_COLOR,
+                    'middle' : self.cf.PIECE_WHITE_MIDDLE_COLOR,
                     'inner'  : self.cf.PIECE_WHITE_INNER_COLOR},
             'black' :
                     {'shadow_start' : self.cf.PIECE_BLACK_SHADOW_START_COLOR,
                     'shadow_end' : self.cf.PIECE_BLACK_SHADOW_END_COLOR,
                     'border' : self.cf.PIECE_BLACK_BORDER_COLOR,
+                    'middle' : self.cf.PIECE_BLACK_MIDDLE_COLOR,
                     'inner'  : self.cf.PIECE_BLACK_INNER_COLOR}}
 
         self.color = color
@@ -65,7 +67,7 @@ class Piece(object):
         piece_width.append(piece_width[0] - piece_border * 2)
         piece_width.append(piece_width[0] * self.cf.PIECE_MIDDLE_THICKNESS)
 
-        color_order = ['border', 'inner', 'border']
+        color_order = ['border', 'middle', 'inner']
 
         if init:
             self.shadow = gr.CircularGradient(x, y,
