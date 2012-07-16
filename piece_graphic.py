@@ -6,31 +6,32 @@ import math
 import primitives as pm
 import gradient as gr
 
-import backgammon_config as conf
+import backgammon_config as cf
 
 class Piece(object):
     NONE = (0, 0, 0, 0)
-    HOVER = conf.PIECE_SELECTOR_HOVER
-    SELECTED = conf.PIECE_SELECTOR_SELECTED
+    HOVER = cf.PIECE_SELECTOR_HOVER
+    SELECTED = cf.PIECE_SELECTOR_SELECTED
     CURRENT = NONE
 
     hover = False
     selected = False
     selectable = False
+    selector = None
+
     colors = { 'white' :
-                        {'shadow_start' : conf.PIECE_WHITE_SHADOW_START_COLOR,
-                         'shadow_end' : conf.PIECE_WHITE_SHADOW_END_COLOR,
-                         'border' : conf.PIECE_WHITE_BORDER_COLOR,
-                         'inner'  : conf.PIECE_WHITE_INNER_COLOR},
+                        {'shadow_start' : cf.PIECE_WHITE_SHADOW_START_COLOR,
+                         'shadow_end' : cf.PIECE_WHITE_SHADOW_END_COLOR,
+                         'border' : cf.PIECE_WHITE_BORDER_COLOR,
+                         'inner'  : cf.PIECE_WHITE_INNER_COLOR},
                'black' :
-                        {'shadow_start' : conf.PIECE_BLACK_SHADOW_START_COLOR,
-                         'shadow_end' : conf.PIECE_BLACK_SHADOW_END_COLOR,
-                         'border' : conf.PIECE_BLACK_BORDER_COLOR,
-                         'inner'  : conf.PIECE_BLACK_INNER_COLOR}}
+                        {'shadow_start' : cf.PIECE_BLACK_SHADOW_START_COLOR,
+                         'shadow_end' : cf.PIECE_BLACK_SHADOW_END_COLOR,
+                         'border' : cf.PIECE_BLACK_BORDER_COLOR,
+                         'inner'  : cf.PIECE_BLACK_INNER_COLOR}}
 
     def __init__(self, x, y, width, color, selectable):
         self.color = color
-        self.selector_parts = []
         self.selectable = selectable
         self.draw(x, y, width, selectable, True)
 
@@ -45,11 +46,8 @@ class Piece(object):
 
 
     def render_extras(self):
-        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
-        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
-        for part in self.selector_parts:
-            part.draw(pyglet.gl.GL_LINE_LOOP)
-        pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
+        if self.selectable:
+            self.selector.render()
 
 
     def draw(self, x, y, width, selectable, init = False):
@@ -57,13 +55,13 @@ class Piece(object):
         self.y = y
         self.selectable = selectable
         piece_width = []
-        self.piece_shadow_thickness = width * conf.PIECE_SHADOW_THICKNESS
+        self.piece_shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
         piece_width.append(width - self.piece_shadow_thickness)
         self.width = piece_width[0]
         piece_shadow = width
-        piece_border = piece_width[0] * conf.PIECE_BORDER_THICKNESS
+        piece_border = piece_width[0] * cf.PIECE_BORDER_THICKNESS
         piece_width.append(piece_width[0] - piece_border * 2)
-        piece_width.append(piece_width[0] * conf.PIECE_MIDDLE_THICKNESS)
+        piece_width.append(piece_width[0] * cf.PIECE_MIDDLE_THICKNESS)
 
         color_order = ['border', 'inner', 'border']
 
@@ -87,45 +85,20 @@ class Piece(object):
                 self.parts[i].draw(x, y, piece_width[i] / 2,
                                         self.colors[self.color][color_order[i]])
 
-        self.draw_selector()
+        self.draw_selector(init)
 
 
-    def draw_selector(self):
-        for part in self.selector_parts:
-            part.delete()
-        self.selector_parts = []
-
+    def draw_selector(self, init = False):
         if self.selectable:
-            start_radius = (self.width * (1 + conf.PIECE_SELECTOR_SPACING)) / 2
-            delta_radius = self.width * conf.PIECE_SELECTOR_THICKNESS
-
-            levels = int(abs(delta_radius) + 1)
-            radius_step = 1
-
-            points = 360
-            angle_step = math.pi * 2 / points
-
-            vertex_array = []
-            color_array = []
-
-            for i in range(levels):
-                radius = start_radius + i * radius_step
-                vertex_array = []
-                color_array = []
-
-                for j in range(points):
-                    w = radius * math.cos(angle_step * j)
-                    h = radius * math.sin(angle_step * j)
-
-                    vertex_array.append(self.x + w)
-                    vertex_array.append(self.y + h)
-                    for c in self.CURRENT:
-                        color_array.append(c)
-
-                self.selector_parts.append(
-                    pyglet.graphics.vertex_list(points,
-                                                ('v2f', vertex_array),
-                                                ('c4f', color_array)))
+            start_radius = (self.width * (1 + cf.PIECE_SELECTOR_SPACING)) / 2
+            delta_radius = self.width * cf.PIECE_SELECTOR_THICKNESS
+            
+            if init:
+                self.selector = pm.CircleOutline(self.x, self.y, start_radius,
+                                                    delta_radius, self.CURRENT)
+            else:
+                self.selector.draw(self.x, self.y, start_radius, delta_radius,
+                                    self.CURRENT)
 
 
     def mouse_motion(self, x, y, dx, dy):

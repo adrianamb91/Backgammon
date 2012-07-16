@@ -128,5 +128,74 @@ class RoundedLabel(RoundedRect):
                                         anchor_x = 'center', anchor_y = 'center')
 
 
+class Outline(object):
+    primitive_parts = []
+    def __init__(self, vertices, color):
+        self.draw(vertices, color)
+
+    def render(self):
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
+        for part in self.primitive_parts:
+            part.draw(pyglet.gl.GL_LINE_LOOP)
+        pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
+
+    def draw(self, vertices_lists, color):
+        for part in self.primitive_parts:
+            part.delete()
+        self.primitive_parts = []
+
+        for vertices in vertices_lists:
+            vertex_array = []
+            color_array = []
+
+            vertex_nr = len(vertices)
+            coord_nr = len(vertices[0])
+            color_nr = len(color)
+
+            for vertex in vertices:
+                for coord in vertex:
+                    vertex_array.append(coord)
+            if len(vertex_array) != vertex_nr * coord_nr:
+                print "Incorrect vertex list"
+                self.primitive_parts = None
+                return
+
+            for i in range(vertex_nr):
+                for c in color:
+                    color_array.append(c)
+
+            self.primitive_parts.append(pyglet.graphics.vertex_list(vertex_nr,
+                                       ('v' + str(coord_nr) + 'f', vertex_array),
+                                       ('c' + str(color_nr) + 'f', color_array)))
+
+class CircleOutline(Outline):
+    points = 180
+    angle_step = math.pi * 2 / points
+
+    def __init__(self, x, y, start_radius, delta_radius, color):
+        self.draw(x, y, start_radius, delta_radius, color)
+
+
+    def draw(self, x, y, start_radius, delta_radius, color):
+        levels = int(abs(delta_radius) + 1)
+        vertices_lists = []
+
+        for i in range(levels):
+            radius = start_radius + i
+            vertex_array = []
+            color_array = []
+
+            for j in range(self.points):
+                w = radius * math.cos(self.angle_step * j)
+                h = radius * math.sin(self.angle_step * j)
+
+                vertex_array.append((x + w, y + h))
+
+            vertices_lists.append(vertex_array)
+
+        super(CircleOutline, self).draw(vertices_lists, color)
+
+
 if __name__ == '__main__':
     "Please do not run this file directly, include it."
