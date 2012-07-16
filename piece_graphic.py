@@ -6,12 +6,12 @@ import math
 import primitives as pm
 import gradient as gr
 
-import backgammon_config as cf
+#import backgammon_config as cf
 
 class Piece(object):
     NONE = (0, 0, 0, 0)
-    HOVER = cf.PIECE_SELECTOR_HOVER
-    SELECTED = cf.PIECE_SELECTOR_SELECTED
+    HOVER = NONE
+    SELECTED = NONE
     CURRENT = NONE
 
     hover = False
@@ -19,18 +19,22 @@ class Piece(object):
     selectable = False
     selector = None
 
-    colors = { 'white' :
-                        {'shadow_start' : cf.PIECE_WHITE_SHADOW_START_COLOR,
-                         'shadow_end' : cf.PIECE_WHITE_SHADOW_END_COLOR,
-                         'border' : cf.PIECE_WHITE_BORDER_COLOR,
-                         'inner'  : cf.PIECE_WHITE_INNER_COLOR},
-               'black' :
-                        {'shadow_start' : cf.PIECE_BLACK_SHADOW_START_COLOR,
-                         'shadow_end' : cf.PIECE_BLACK_SHADOW_END_COLOR,
-                         'border' : cf.PIECE_BLACK_BORDER_COLOR,
-                         'inner'  : cf.PIECE_BLACK_INNER_COLOR}}
+    def __init__(self, configuration, x, y, width, color, selectable):
+        self.cf = configuration
+        self.HOVER = self.cf.PIECE_SELECTOR_HOVER
+        self.SELECTED = self.cf.PIECE_SELECTOR_SELECTED
+        self.colors = {
+            'white' :
+                    {'shadow_start' : self.cf.PIECE_WHITE_SHADOW_START_COLOR,
+                    'shadow_end' : self.cf.PIECE_WHITE_SHADOW_END_COLOR,
+                    'border' : self.cf.PIECE_WHITE_BORDER_COLOR,
+                    'inner'  : self.cf.PIECE_WHITE_INNER_COLOR},
+            'black' :
+                    {'shadow_start' : self.cf.PIECE_BLACK_SHADOW_START_COLOR,
+                    'shadow_end' : self.cf.PIECE_BLACK_SHADOW_END_COLOR,
+                    'border' : self.cf.PIECE_BLACK_BORDER_COLOR,
+                    'inner'  : self.cf.PIECE_BLACK_INNER_COLOR}}
 
-    def __init__(self, x, y, width, color, selectable):
         self.color = color
         self.selectable = selectable
         self.draw(x, y, width, selectable, True)
@@ -55,13 +59,13 @@ class Piece(object):
         self.y = y
         self.selectable = selectable
         piece_width = []
-        self.piece_shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
+        self.piece_shadow_thickness = width * self.cf.PIECE_SHADOW_THICKNESS
         piece_width.append(width - self.piece_shadow_thickness)
         self.width = piece_width[0]
         piece_shadow = width
-        piece_border = piece_width[0] * cf.PIECE_BORDER_THICKNESS
+        piece_border = piece_width[0] * self.cf.PIECE_BORDER_THICKNESS
         piece_width.append(piece_width[0] - piece_border * 2)
-        piece_width.append(piece_width[0] * cf.PIECE_MIDDLE_THICKNESS)
+        piece_width.append(piece_width[0] * self.cf.PIECE_MIDDLE_THICKNESS)
 
         color_order = ['border', 'inner', 'border']
 
@@ -90,8 +94,8 @@ class Piece(object):
 
     def draw_selector(self, init = False):
         if self.selectable:
-            start_radius = (self.width * (1 + cf.PIECE_SELECTOR_SPACING)) / 2
-            delta_radius = self.width * cf.PIECE_SELECTOR_THICKNESS
+            start_radius = (self.width * (1 + self.cf.PIECE_SELECTOR_SPACING)) / 2
+            delta_radius = self.width * self.cf.PIECE_SELECTOR_THICKNESS
             
             if init:
                 self.selector = pm.CircleOutline(self.x, self.y, start_radius,
@@ -110,13 +114,13 @@ class Piece(object):
                 if not self.hover:
                     self.hover = True
                     if not self.selected:
-                        self.CURRENT = Piece.HOVER
+                        self.CURRENT = self.HOVER
                         self.draw_selector()
             else:
                 if self.hover:
                     self.hover = False
                     if not self.selected:
-                        self.CURRENT = Piece.NONE
+                        self.CURRENT = self.NONE
                         self.draw_selector()
 
             if self.hover: return True
@@ -132,16 +136,16 @@ class Piece(object):
             if dist < radius:
                 if not self.selected:
                     self.selected = True
-                    self.CURRENT = Piece.SELECTED
+                    self.CURRENT = self.SELECTED
                     self.draw_selector()
                 else:
                     self.selected = False
-                    self.CURRENT = Piece.HOVER
+                    self.CURRENT = self.HOVER
                     self.draw_selector()
             else:
                 if self.selected:
                     self.selected = False
-                    self.CURRENT = Piece.NONE
+                    self.CURRENT = self.NONE
                     self.draw_selector()
 
             if self.hover: return True

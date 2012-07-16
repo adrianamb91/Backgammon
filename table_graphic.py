@@ -130,7 +130,7 @@ class Table(object):
 
                 if init:
                     self.pieces[i].append(
-                        piece.Piece(offset_x_pc, offset_y_pc, width,
+                        piece.Piece(cf, offset_x_pc, offset_y_pc, width,
                             self.player_colors[spaces[i][1]],
                             (j == piece_nr - 1 and
                             self.player_colors[spaces[i][1]] == self.PLAYER)))
