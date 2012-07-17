@@ -1,5 +1,4 @@
 import pyglet
-import math
 
 import primitives as pm
 import gradient as gr
@@ -11,6 +10,7 @@ import table_graphic_config as cf
 class Table(object):
     PLAYER = 'white'
     COMPUTER = 'black'
+    GHOST = 'ghost'
     animated = []
     offset_x = {}
     offset_y = {}
@@ -21,23 +21,79 @@ class Table(object):
         self.board = board
         self.player_colors = { board.get_computer() : self.COMPUTER,
                                board.get_player() : self.PLAYER}
-#        self.player_order = { 0 : }
 
         self.draw(width, height, True)
 
         pyglet.clock.schedule_interval(self.animate_pieces, cf.TICK_SIZE)
+        self.board.generate_dices()
+
+        self.ghost_pool = []
+        self.active_ghosts = []
+        for i in range(30):
+            self.ghost_pool.append(piece.Piece(cf, 0, 0, 1, self.GHOST, False))
 
 
     def mouse_motion(self, x, y, dx, dy):
         for p in self.active_pieces:
             if p.mouse_motion(x, y, dx, dy):
-                self.move_piece(p, 200, 200, p.total_width)
+                return True
+
+        for p in self.active_ghosts:
+            if p.mouse_motion(x, y, dx, dy):
                 return True
 
 
     def mouse_press_left(self, x, y):
-        for p in self.active_pieces:
-            p.mouse_press_left(x, y)
+        for p in self.active_ghosts:
+            self.ghost_pool.append(p)
+        self.active_ghosts = []
+
+        col = None
+        for i in range(len(self.game_pieces)):
+            for j in range(len(self.game_pieces[i])):
+                if self.game_pieces[i][j].mouse_press_left(x, y):
+                    col = i
+
+        for bar in self.bar_pieces:
+            for p in bar:
+                if p.mouse_press_left(x, y):
+                    col = -1
+
+        if col != None:
+            suggestions = self.board.get_player_destinations(col + 1)
+            suggestions = set([s - 1 for s in suggestions])
+            width = self.temp_width['triangle'] * cf.PIECE_SIZE_PERCENTAGE
+            shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
+            actual_width = width - shadow_thickness + 1
+
+            for s in suggestions:
+                j = len(self.game_pieces[s])
+                if 0 <= s <= 5 or 18 <= s <= 23:
+                    half = 0
+                else: half = 1
+                factor1 = s % 6
+                factor2 = int(s / 12)
+                if factor2 == 0: factor3 = 1
+                else: factor3 = -1
+
+                offset_x_pc = (self.offset_x['half'][half] +
+                                self.temp_width['half'] * factor2 +
+                                    (self.temp_width['triangle'] / 2 +
+                                    self.temp_width['triangle'] * factor1) *
+                                    factor3)
+
+                offset_y_pc = (self.offset_y['half'][half] +
+                                self.temp_height['half'] * factor2 +
+                                (actual_width / 2 + actual_width * j) * factor3)
+
+                p = self.ghost_pool.pop()
+                p.draw(offset_x_pc, offset_y_pc, width, True)
+                self.active_ghosts.append(p)
+                #TODO merge piece generation code
+                #TODO add piece borning suggestion
+                #TODO ghost piece redrawing
+                #TODO actual movement of piece when suggestion is clicked
+                #TODO dices drawing
 
 
     def animate_pieces(self, dt):
@@ -91,6 +147,13 @@ class Table(object):
         for p in self.active_pieces:
             p.render_extras()
 
+        for p in self.active_ghosts:
+            p.render_effects()
+        for p in self.active_ghosts:
+            p.render()
+        for p in self.active_ghosts:
+            p.render_extras()
+
         for col in self.borne_pieces:
             for p in col:
                 p.render_effects()
@@ -135,7 +198,8 @@ class Table(object):
                 self.piece_pool.append(piece.Piece(cf, 0, 0, 1, self.PLAYER,
                                                                         False))
             self.active_pieces = []
-            self.game_pieces = [[]] * 24
+            self.game_pieces = []
+            for i in range(24): self.game_pieces.append([])
             self.bar_pieces = [[], []]
             self.borne_pieces = [[], []]
 
@@ -146,7 +210,8 @@ class Table(object):
                 self.piece_pool.append(p)
 
         self.active_pieces = []
-        self.game_pieces = [[]] * 24
+        self.game_pieces = []
+        for i in range(24): self.game_pieces.append([])
         self.bar_pieces = [[], []]
         self.borne_pieces = [[], []]
         piece_index = { self.board.get_player() : 0,

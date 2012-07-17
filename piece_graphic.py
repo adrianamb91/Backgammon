@@ -33,7 +33,13 @@ class Piece(object):
                     'shadow_end' : self.cf.PIECE_BLACK_SHADOW_END_COLOR,
                     'border' : self.cf.PIECE_BLACK_BORDER_COLOR,
                     'middle' : self.cf.PIECE_BLACK_MIDDLE_COLOR,
-                    'inner'  : self.cf.PIECE_BLACK_INNER_COLOR}}
+                    'inner'  : self.cf.PIECE_BLACK_INNER_COLOR},
+            'ghost' :
+                    {'shadow_start' : self.cf.PIECE_GHOST_SHADOW_START_COLOR,
+                    'shadow_end' : self.cf.PIECE_GHOST_SHADOW_END_COLOR,
+                    'border' : self.cf.PIECE_GHOST_BORDER_COLOR,
+                    'middle' : self.cf.PIECE_GHOST_MIDDLE_COLOR,
+                    'inner'  : self.cf.PIECE_GHOST_INNER_COLOR}}
 
         self.color = color
         self.selectable = selectable
@@ -152,7 +158,7 @@ class Piece(object):
                     self.CURRENT = self.NONE
                     self.draw_selector()
 
-            if self.hover: return True
+            if self.selected: return True
             else: return False
         return False
 

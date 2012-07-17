@@ -13,7 +13,7 @@ class Board:
         for i in range(25):
             self.allSpaces.insert(i, (0, self.empty)) # n = nothing
             
-        self.allSpaces[0] = (0, self.computer, 0, self.player) # bar
+        self.allSpaces[0] = (0, self.computer, 2, self.player) # bar
         self.allSpaces[1] = (2, self.computer) # c = computer, p = player
         self.allSpaces[6] = (5, self.player)
         self.allSpaces[8] = (3, self.player)
@@ -21,7 +21,7 @@ class Board:
         self.allSpaces[13] = (5, self.player)
         self.allSpaces[17] = (3, self.computer)
         self.allSpaces[19] = (5, self.computer)
-        self.allSpaces[24] = (2, self.player)
+        #self.allSpaces[24] = (2, self.player)
         
         for i in range(25) :
             self.allSpaces[i] = list(self.allSpaces[i])
@@ -88,11 +88,9 @@ class Board:
 
     def get_player_destinations(self, col):
         dest = [] # 25 = you can move it out 
-        
-        if (self.allSpaces[col][1] != self.player) :
-            print "Invalid! You don't have any piece here"
-            return dest
-        else :
+
+        if (self.allSpaces[col][1] == self.player or
+            (col == 0 and self.allSpaces[col][2] != 0)) :
             if (col == 0) :
                 for i in range(2):
                     if (self.allSpaces[25 - self.dices[i]][1] == self.player or
@@ -124,6 +122,9 @@ class Board:
                                 dest.append(col - self.dices[i])
                         else :
                             dest.append(25)
+            return dest
+        else:
+            print "Invalid! You don't have any piece here"
             return dest
 
     def get_spaces(self):
