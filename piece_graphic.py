@@ -53,10 +53,14 @@ class Piece(object):
         if self.selectable:
             self.selector.render()
 
+    def set_color(self, color):
+        self.color = color
+
 
     def draw(self, x, y, width, selectable, init = False):
         self.x = x
         self.y = y
+        self.total_width = width
         self.selectable = selectable
         piece_width = []
         self.piece_shadow_thickness = width * self.cf.PIECE_SHADOW_THICKNESS
@@ -89,15 +93,15 @@ class Piece(object):
                 self.parts[i].draw(x, y, piece_width[i] / 2,
                                         self.colors[self.color][color_order[i]])
 
-        self.draw_selector(init)
+        if self.selectable: self.draw_selector()
 
 
-    def draw_selector(self, init = False):
+    def draw_selector(self):
         if self.selectable:
             start_radius = (self.width * (1 + self.cf.PIECE_SELECTOR_SPACING)) / 2
             delta_radius = self.width * self.cf.PIECE_SELECTOR_THICKNESS
             
-            if init:
+            if self.selector == None:
                 self.selector = pm.CircleOutline(self.x, self.y, start_radius,
                                                     delta_radius, self.CURRENT)
             else:

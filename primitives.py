@@ -56,7 +56,7 @@ class Rect(Polygon):
 
 
 class Circle(Polygon):
-    points = 180
+    points = 90
     angle_step = math.pi * 2 / points
 
     def __init__(self, x, y, radius, color):
@@ -78,7 +78,7 @@ class Circle(Polygon):
 class RoundedRect(Polygon):
     big_offset = [(0, 0), (1, 0), (1, 1), (0, 1)]
     small_offset = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
-    corner_points = 90
+    corner_points = 20
     angle_step = math.pi / 2 / corner_points
 
     def __init__(self, x, y, width, height, corner_radius, color):
@@ -170,7 +170,7 @@ class Outline(object):
                                        ('c' + str(color_nr) + 'f', color_array)))
 
 class CircleOutline(Outline):
-    points = 180
+    points = 90
     angle_step = math.pi * 2 / points
 
     def __init__(self, x, y, start_radius, delta_radius, color):

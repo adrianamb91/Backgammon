@@ -1,16 +1,16 @@
 import pyglet
 from pyglet.gl import *
-import primitives
-import backgammon_config as conf
+
+import backgammon_config as cf
 import table_graphic
 import board
 
 class BackgammonWindow(pyglet.window.Window):
     def __init__(self, config):
         super(BackgammonWindow, self).__init__(resizable=True, config=config)
-        self.set_minimum_size(conf.RELATIVE_WIDTH/2, conf.RELATIVE_HEIGHT/2)
-        self.set_size(conf.RELATIVE_WIDTH + conf.BORDER_THICKNESS * 2,
-                      conf.RELATIVE_HEIGHT + conf.BORDER_THICKNESS * 2)
+        self.set_minimum_size(cf.RELATIVE_WIDTH/2, cf.RELATIVE_HEIGHT/2)
+        self.set_size(cf.RELATIVE_WIDTH + cf.BORDER_THICKNESS * 2,
+                      cf.RELATIVE_HEIGHT + cf.BORDER_THICKNESS * 2)
         self.set_caption('Backgammon')
 
         self.cursor_hand = self.get_system_mouse_cursor(self.CURSOR_HAND)

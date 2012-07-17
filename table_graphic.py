@@ -11,30 +11,59 @@ import table_graphic_config as cf
 class Table(object):
     PLAYER = 'white'
     COMPUTER = 'black'
+    animated = []
+    offset_x = {}
+    offset_y = {}
+    temp_width = {}
+    temp_height = {}
 
     def __init__(self, width, height, board):
         self.board = board
         self.player_colors = { board.get_computer() : self.COMPUTER,
                                board.get_player() : self.PLAYER}
-        self.offset_x = {}
-        self.offset_y = {}
-        self.temp_width = {}
-        self.temp_height = {}
+#        self.player_order = { 0 : }
 
         self.draw(width, height, True)
 
+        pyglet.clock.schedule_interval(self.animate_pieces, cf.TICK_SIZE)
+
 
     def mouse_motion(self, x, y, dx, dy):
-        for col in self.pieces:
-            for p in col:
-                if p.mouse_motion(x, y, dx, dy):
-                    return True
+        for p in self.active_pieces:
+            if p.mouse_motion(x, y, dx, dy):
+                self.move_piece(p, 200, 200, p.total_width)
+                return True
 
 
     def mouse_press_left(self, x, y):
-        for col in self.pieces:
-            for p in col:
-                p.mouse_press_left(x, y)
+        for p in self.active_pieces:
+            p.mouse_press_left(x, y)
+
+
+    def animate_pieces(self, dt):
+        for p in self.animated:
+            piece = p[0]
+            piece.draw(piece.x - p[1], piece.y - p[2], piece.total_width - p[3], False)
+            piece.render()
+            p[4] -= 1
+
+        self.animated[:] = [x for x in self.animated if x[4] > 0]
+
+
+    def move_piece(self, piece, x, y, width):
+        for p in self.animated:
+            if piece == p[0]:
+                return
+        dx = piece.x - x
+        dy = piece.y - y
+        dw = piece.total_width - width
+
+        steps = cf.PIECE_ANIMATION_STEPS
+        step_x = dx / steps
+        step_y = dy / steps
+        step_w = dw / steps
+
+        self.animated.append([piece, step_x, step_y, step_w, steps])
 
 
     def render(self):
@@ -55,15 +84,19 @@ class Table(object):
         for label in self.labels:
             label.render()
 
-        for col in self.pieces:
+        for p in self.active_pieces:
+            p.render_effects()
+        for p in self.active_pieces:
+            p.render()
+        for p in self.active_pieces:
+            p.render_extras()
+
+        for col in self.borne_pieces:
             for p in col:
                 p.render_effects()
-        for col in self.pieces:
+        for col in self.borne_pieces:
             for p in col:
                 p.render()
-        for col in self.pieces:
-            for p in col:
-                p.render_extras()
 
 
     def draw(self, w, h, init = False):
@@ -97,16 +130,32 @@ class Table(object):
         actual_width = width - shadow_thickness + 1
 
         if init:
-            self.pieces = []
-            self.pieces.append([])
-            spaces = self.board.get_spaces()
+            self.piece_pool = []
+            for i in range(30):
+                self.piece_pool.append(piece.Piece(cf, 0, 0, 1, self.PLAYER,
+                                                                        False))
+            self.active_pieces = []
+            self.game_pieces = [[]] * 24
+            self.bar_pieces = [[], []]
+            self.borne_pieces = [[], []]
+
+        for p in self.active_pieces:
+            self.piece_pool.append(p)
+        for col in self.borne_pieces:
+            for p in col:
+                self.piece_pool.append(p)
+
+        self.active_pieces = []
+        self.game_pieces = [[]] * 24
+        self.bar_pieces = [[], []]
+        self.borne_pieces = [[], []]
+        piece_index = { self.board.get_player() : 0,
+                        self.board.get_computer() : 0}
+
+        spaces = self.board.get_spaces()
 
         for i in range(1, 25):
-            if init: 
-                self.pieces.append([])
-                piece_nr = spaces[i][0]
-            else:
-                piece_nr = len(self.pieces[i])
+            piece_nr = spaces[i][0]
 
             for j in range(piece_nr):
                 pos = (i - 1)
@@ -128,19 +177,56 @@ class Table(object):
                                 self.temp_height['half'] * factor2 +
                                 (actual_width / 2 + actual_width * j) * factor3)
 
-                if init:
-                    self.pieces[i].append(
-                        piece.Piece(cf, offset_x_pc, offset_y_pc, width,
-                            self.player_colors[spaces[i][1]],
+                p = self.piece_pool.pop()
+                p.set_color(self.player_colors[spaces[i][1]])
+                p.draw(offset_x_pc, offset_y_pc, width,
                             (j == piece_nr - 1 and
-                            self.player_colors[spaces[i][1]] == self.PLAYER)))
-                else:
-                    self.pieces[i][j].draw(offset_x_pc, offset_y_pc, width,
-                            (j == piece_nr - 1 and
-                            self.pieces[i][j].color == self.PLAYER))
+                            self.player_colors[spaces[i][1]] == self.PLAYER))
+                self.game_pieces[pos].append(p)
+                self.active_pieces.append(p)
+                piece_index[spaces[i][1]] += 1
 
-            if init: self.pieces.append([])
+        width = self.inner_border_thickness * cf.PIECE_SIZE_PERCENTAGE
+        shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
+        actual_width = width - shadow_thickness + 1
 
+        for i in range(2):
+            for j in range(spaces[0][i * 2]):
+                if i == 0: factor = -1
+                else: factor = 1
+                offset_x_pc = (self.offset_x['illusion'][1] -
+                                self.inner_border_thickness * (i + 0.5))
+
+                offset_y_pc = (self.offset_y['illusion'][0] +
+                                self.temp_height['illusion'] * (1 - i) +
+                                (actual_width / 2 + actual_width * j) * factor)
+
+                p = self.piece_pool.pop()
+                p.set_color(self.player_colors[spaces[0][i * 2 + 1]])
+                p.draw(offset_x_pc, offset_y_pc, width,
+                        self.player_colors[spaces[0][i * 2 + 1]] == self.PLAYER)
+                self.bar_pieces[i].append(p)
+                self.active_pieces.append(p)
+                piece_index[spaces[0][i * 2 + 1]] += 1
+
+        player_order = { 0: (self.board.get_player(), self.PLAYER),
+                         1: (self.board.get_computer(), self.COMPUTER)}
+
+        for i in range(2):
+            piece_nr = 15 - piece_index[player_order[i][0]]
+
+            for j in range(piece_nr):
+                offset_x_pc = (self.offset_x['label'][0] +
+                                self.temp_width['label'] + 
+                                actual_width * (j + 1.5))
+
+                offset_y_pc = (self.offset_y['global'] +
+                                self.temp_height['illusion'] * i + 
+                                self.inner_border_thickness * (i + 0.5))
+                p = self.piece_pool.pop()
+                p.set_color(player_order[i][1])
+                p.draw(offset_x_pc, offset_y_pc, width, False)
+                self.borne_pieces[i].append(p)
 
     def draw_canvas(self, init = False):
         if init:
@@ -194,21 +280,27 @@ class Table(object):
         if init:
             self.halves_3d = []
 
+        self.offset_x['illusion'] = []
+        self.offset_y['illusion'] = []
         for i in range(2):
-            offset_x_il = (self.offset_x['global'] + self.temp_width['illusion']
-                            * i + self.inner_border_thickness * (2 * i + 1))
-            offset_y_il = self.offset_y['global'] + self.inner_border_thickness
+            self.offset_x['illusion'].append(self.offset_x['global'] +
+                            self.temp_width['illusion'] * i +
+                            self.inner_border_thickness * (2 * i + 1))
+            self.offset_y['illusion'].append(self.offset_y['global'] +
+                            self.inner_border_thickness)
 
             if init:
                 self.halves_3d.append(gr.RectGradient(
-                                offset_x_il, offset_y_il,
+                                self.offset_x['illusion'][i],
+                                self.offset_y['illusion'][i],
                                 self.temp_width['illusion'],
                                 self.temp_height['illusion'],
                                 cf.TABLE_INNER_3D_SHADOW_START_COLOR,
                                 cf.TABLE_INNER_3D_SHADOW_END_COLOR,
                                 0, self.inner_3d_thickness))
             else:
-                self.halves_3d[i].draw(offset_x_il, offset_y_il,
+                self.halves_3d[i].draw(self.offset_x['illusion'][i],
+                                self.offset_y['illusion'][i],
                                 self.temp_width['illusion'],
                                 self.temp_height['illusion'],
                                 0, self.inner_3d_thickness)
@@ -325,36 +417,45 @@ class Table(object):
 
 
     def draw_table_home_labels(self, init = False):
-        label_width = self.table_width * cf.HOME_LABEL_WIDTH
-        label_height = self.inner_border_thickness * cf.HOME_LABEL_HEIGHT
+        self.temp_width['label'] = self.table_width * cf.HOME_LABEL_WIDTH
+        self.temp_height['label'] = (self.inner_border_thickness *
+                                    cf.HOME_LABEL_HEIGHT)
 
-        corner_radius = label_width * cf.HOME_LABEL_CORNER_RADIUS
+        corner_radius = self.temp_width['label'] * cf.HOME_LABEL_CORNER_RADIUS
         lb_text = [cf.HOME_LABEL_TEXT_PLAYER, cf.HOME_LABEL_TEXT_COMPUTER]
 
+        self.offset_x['label'] = []
+        self.offset_y['label'] = []
         if init:
             self.labels = []
 
         for i in range(2):
-            offset_x_lb = (self.offset_x['global'] + self.table_width *
-                                cf.HOME_LABEL_SPACER)
-            offset_y_lb = (self.offset_y['global'] + self.table_height * i -
-                            self.inner_border_thickness * i +
-                            (self.inner_border_thickness - label_height) / 2)
+            self.offset_x['label'].append(self.offset_x['global'] +
+                            self.table_width * cf.HOME_LABEL_SPACER)
+            self.offset_y['label'].append(self.offset_y['global'] +
+                            self.table_height * i - self.inner_border_thickness
+                            * i + (self.inner_border_thickness -
+                            self.temp_height['label']) / 2)
 
             if init:
-                self.labels.append(pm.RoundedLabel(offset_x_lb, offset_y_lb,
-                                   label_width, label_height, corner_radius,
-                                   cf.HOME_LABEL_BG_COLOR, lb_text[i],
-                                   cf.HOME_LABEL_TEXT_PROPORTION,
-                                   cf.HOME_LABEL_TEXT_FONT,
-                                   cf.HOME_LABEL_FG_COLOR))
+                self.labels.append(pm.RoundedLabel(
+                                self.offset_x['label'][i],
+                                self.offset_y['label'][i],
+                                self.temp_width['label'],
+                                self.temp_height['label'], corner_radius,
+                                cf.HOME_LABEL_BG_COLOR, lb_text[i],
+                                cf.HOME_LABEL_TEXT_PROPORTION,
+                                cf.HOME_LABEL_TEXT_FONT,
+                                cf.HOME_LABEL_FG_COLOR))
             else:
-                self.labels[i].draw(offset_x_lb, offset_y_lb,
-                                   label_width, label_height, corner_radius,
-                                   cf.HOME_LABEL_BG_COLOR, lb_text[i],
-                                   cf.HOME_LABEL_TEXT_PROPORTION,
-                                   cf.HOME_LABEL_TEXT_FONT,
-                                   cf.HOME_LABEL_FG_COLOR)
+                self.labels[i].draw(self.offset_x['label'][i],
+                                    self.offset_y['label'][i],
+                                    self.temp_width['label'],
+                                    self.temp_height['label'], corner_radius,
+                                    cf.HOME_LABEL_BG_COLOR, lb_text[i],
+                                    cf.HOME_LABEL_TEXT_PROPORTION,
+                                    cf.HOME_LABEL_TEXT_FONT,
+                                    cf.HOME_LABEL_FG_COLOR)
 
 if __name__ == '__main__':
     "Please do not run this file directly, include it."
