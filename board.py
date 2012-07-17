@@ -86,6 +86,46 @@ class Board:
                 destination[1] = self.player
         return True
 
+    def get_player_destinations(self, col):
+        dest = [] # 25 = you can move it out 
+        
+        if (self.allSpaces[col][1] != self.player) :
+            print "Invalid! You don't have any piece here"
+            return dest
+        else :
+            if (col == 0) :
+                for i in range(2):
+                    if (self.allSpaces[25 - self.dices[i]][1] == self.player or
+                        self.allSpaces[25 - self.dices[i]][1] == self.empty or 
+                        (self.allSpaces[25 - self.dices[i]][1] == self.computer and 
+                         self.allSpaces[25 - self.dices[i]][0] == 1)) :
+                        dest.append(25 - self.dices[i])
+            else :
+                t = True
+                for i in range (7, 25) :
+                    if (self.allSpaces[i][1] == self.player) :
+                        t = False
+                        break
+                if (t == False) :
+                    for i in range(2):
+                        if (col - self.dices[i] > 1) :
+                            if (self.allSpaces[col - self.dices[i]][1] == self.player or
+                                self.allSpaces[col - self.dices[i]][1] == self.empty or
+                                (self.allSpaces[col - self.dices[i]][1] == self.computer and
+                                 self.allSpaces[col - self.dices[i]][0] == 1)) :
+                                dest.append(col - self.dices[i])
+                else:
+                    for i in range(2):
+                        if (col - self.dices[i] > 1) :
+                            if (self.allSpaces[col - self.dices[i]][1] == self.player or
+                                self.allSpaces[col - self.dices[i]][1] == self.empty or
+                                (self.allSpaces[col - self.dices[i]][1] == self.computer and 
+                                 self.allSpaces[col - self.dices[i]][0] == 1)) : 
+                                dest.append(col - self.dices[i])
+                        else :
+                            dest.append(25)
+            return dest
+
     def get_spaces(self):
         return self.allSpaces
 
