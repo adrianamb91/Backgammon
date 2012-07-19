@@ -6,31 +6,37 @@ import piece_graphic as piece
 
 import table_graphic_config as cf
 
+                #TODO add piece borning suggestion
+                #TODO actual movement of piece when suggestion is clicked
+                #TODO dices drawing
 
 class Table(object):
     PLAYER = 'white'
     COMPUTER = 'black'
     GHOST = 'ghost'
+
+    PIECE_NORMAL = 0
+    PIECE_BAR = 1
+    PIECE_BORNE = 2
+    PIECE_GHOST = 3
+
     animated = []
     offset_x = {}
     offset_y = {}
     temp_width = {}
     temp_height = {}
+    suggestions = set()
+
 
     def __init__(self, width, height, board):
         self.board = board
-        self.player_colors = { board.get_computer() : self.COMPUTER,
-                               board.get_player() : self.PLAYER}
+        self.player_colors = { board.get_computer() : Table.COMPUTER,
+                               board.get_player() : Table.PLAYER}
 
         self.draw(width, height, True)
 
         pyglet.clock.schedule_interval(self.animate_pieces, cf.TICK_SIZE)
         self.board.generate_dices()
-
-        self.ghost_pool = []
-        self.active_ghosts = []
-        for i in range(30):
-            self.ghost_pool.append(piece.Piece(cf, 0, 0, 1, self.GHOST, False))
 
 
     def mouse_motion(self, x, y, dx, dy):
@@ -44,10 +50,6 @@ class Table(object):
 
 
     def mouse_press_left(self, x, y):
-        for p in self.active_ghosts:
-            self.ghost_pool.append(p)
-        self.active_ghosts = []
-
         col = None
         for i in range(len(self.game_pieces)):
             for j in range(len(self.game_pieces[i])):
@@ -61,39 +63,10 @@ class Table(object):
 
         if col != None:
             suggestions = self.board.get_player_destinations(col + 1)
-            suggestions = set([s - 1 for s in suggestions])
-            width = self.temp_width['triangle'] * cf.PIECE_SIZE_PERCENTAGE
-            shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
-            actual_width = width - shadow_thickness + 1
+            self.suggestions = set([s - 1 for s in suggestions])
+        else: self.suggestions = set()
 
-            for s in suggestions:
-                j = len(self.game_pieces[s])
-                if 0 <= s <= 5 or 18 <= s <= 23:
-                    half = 0
-                else: half = 1
-                factor1 = s % 6
-                factor2 = int(s / 12)
-                if factor2 == 0: factor3 = 1
-                else: factor3 = -1
-
-                offset_x_pc = (self.offset_x['half'][half] +
-                                self.temp_width['half'] * factor2 +
-                                    (self.temp_width['triangle'] / 2 +
-                                    self.temp_width['triangle'] * factor1) *
-                                    factor3)
-
-                offset_y_pc = (self.offset_y['half'][half] +
-                                self.temp_height['half'] * factor2 +
-                                (actual_width / 2 + actual_width * j) * factor3)
-
-                p = self.ghost_pool.pop()
-                p.draw(offset_x_pc, offset_y_pc, width, True)
-                self.active_ghosts.append(p)
-                #TODO merge piece generation code
-                #TODO add piece borning suggestion
-                #TODO ghost piece redrawing
-                #TODO actual movement of piece when suggestion is clicked
-                #TODO dices drawing
+        self.draw_ghosts()
 
 
     def animate_pieces(self, dt):
@@ -174,6 +147,7 @@ class Table(object):
         self.draw_table_triangles(init)
         self.draw_table_home_labels(init)
         self.draw_pieces(init)
+        self.draw_ghosts(init)
 
 
     def resize(self):
@@ -188,110 +162,148 @@ class Table(object):
 
 
     def draw_pieces(self, init = False):
-        width = self.temp_width['triangle'] * cf.PIECE_SIZE_PERCENTAGE
-        shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
-        actual_width = width - shadow_thickness + 1
-
         if init:
             self.piece_pool = []
             for i in range(30):
-                self.piece_pool.append(piece.Piece(cf, 0, 0, 1, self.PLAYER,
+                self.piece_pool.append(piece.Piece(cf, 0, 0, 1, Table.PLAYER,
                                                                         False))
-            self.active_pieces = []
-            self.game_pieces = []
-            for i in range(24): self.game_pieces.append([])
-            self.bar_pieces = [[], []]
-            self.borne_pieces = [[], []]
 
-        for p in self.active_pieces:
-            self.piece_pool.append(p)
-        for col in self.borne_pieces:
-            for p in col:
+        if not init:
+            for p in self.active_pieces:
                 self.piece_pool.append(p)
+            for col in self.borne_pieces:
+                for p in col:
+                    self.piece_pool.append(p)
 
         self.active_pieces = []
         self.game_pieces = []
         for i in range(24): self.game_pieces.append([])
         self.bar_pieces = [[], []]
         self.borne_pieces = [[], []]
-        piece_index = { self.board.get_player() : 0,
-                        self.board.get_computer() : 0}
 
         spaces = self.board.get_spaces()
+        piece_index = { self.board.get_player() : 0,
+                        self.board.get_computer() : 0}
 
         for i in range(1, 25):
             piece_nr = spaces[i][0]
 
             for j in range(piece_nr):
                 pos = (i - 1)
-                if 0 <= pos <= 5 or 18 <= pos <= 23:
-                    half = 0
-                else: half = 1
-                factor1 = pos % 6
-                factor2 = int(pos / 12)
-                if factor2 == 0: factor3 = 1
-                else: factor3 = -1
-                
-                offset_x_pc = (self.offset_x['half'][half] +
-                                self.temp_width['half'] * factor2 +
-                                    (self.temp_width['triangle'] / 2 +
-                                    self.temp_width['triangle'] * factor1) *
-                                    factor3)
-
-                offset_y_pc = (self.offset_y['half'][half] +
-                                self.temp_height['half'] * factor2 +
-                                (actual_width / 2 + actual_width * j) * factor3)
-
-                p = self.piece_pool.pop()
-                p.set_color(self.player_colors[spaces[i][1]])
-                p.draw(offset_x_pc, offset_y_pc, width,
-                            (j == piece_nr - 1 and
-                            self.player_colors[spaces[i][1]] == self.PLAYER))
-                self.game_pieces[pos].append(p)
-                self.active_pieces.append(p)
+                self.draw_piece(self.piece_pool, self.game_pieces[pos],
+                                self.active_pieces, Table.PIECE_NORMAL,
+                                self.player_colors[spaces[i][1]],
+                                (j == piece_nr - 1 and
+                                self.player_colors[spaces[i][1]] == Table.PLAYER),
+                                pos)
                 piece_index[spaces[i][1]] += 1
-
-        width = self.inner_border_thickness * cf.PIECE_SIZE_PERCENTAGE
-        shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
-        actual_width = width - shadow_thickness + 1
 
         for i in range(2):
             for j in range(spaces[0][i * 2]):
-                if i == 0: factor = -1
-                else: factor = 1
-                offset_x_pc = (self.offset_x['illusion'][1] -
-                                self.inner_border_thickness * (i + 0.5))
-
-                offset_y_pc = (self.offset_y['illusion'][0] +
-                                self.temp_height['illusion'] * (1 - i) +
-                                (actual_width / 2 + actual_width * j) * factor)
-
-                p = self.piece_pool.pop()
-                p.set_color(self.player_colors[spaces[0][i * 2 + 1]])
-                p.draw(offset_x_pc, offset_y_pc, width,
-                        self.player_colors[spaces[0][i * 2 + 1]] == self.PLAYER)
-                self.bar_pieces[i].append(p)
-                self.active_pieces.append(p)
+                self.draw_piece(self.piece_pool, self.bar_pieces[i],
+                                self.active_pieces, Table.PIECE_BAR,
+                                self.player_colors[spaces[0][i * 2 + 1]],
+                                (j == spaces[0][i * 2] - 1 and
+                                self.player_colors[spaces[0][i * 2 + 1]] ==
+                                                                Table.PLAYER))
                 piece_index[spaces[0][i * 2 + 1]] += 1
 
-        player_order = { 0: (self.board.get_player(), self.PLAYER),
-                         1: (self.board.get_computer(), self.COMPUTER)}
+        player_order = { 0: (self.board.get_player(), Table.PLAYER),
+                         1: (self.board.get_computer(), Table.COMPUTER)}
 
         for i in range(2):
             piece_nr = 15 - piece_index[player_order[i][0]]
 
             for j in range(piece_nr):
-                offset_x_pc = (self.offset_x['label'][0] +
-                                self.temp_width['label'] + 
-                                actual_width * (j + 1.5))
+                self.draw_piece(self.piece_pool, self.borne_pieces[i],
+                                None, Table.PIECE_BORNE, player_order[i][1],
+                                False)
 
-                offset_y_pc = (self.offset_y['global'] +
-                                self.temp_height['illusion'] * i + 
+
+    def draw_ghosts(self, init = False):
+        if init:
+            self.ghost_pool = []
+            for i in range(30):
+                self.ghost_pool.append(piece.Piece(cf, 0, 0, 1, Table.GHOST,
+                                                                        False))
+
+        if not init:
+            for p in self.active_ghosts:
+                self.ghost_pool.append(p)
+
+        self.active_ghosts = []
+
+        for pos in self.suggestions:
+            self.draw_piece(self.ghost_pool, self.active_ghosts,
+                            None, Table.PIECE_GHOST, Table.GHOST, True, pos)
+
+
+    def draw_piece(self, source_pool, target_pool, aux_pool, style, color,
+                                                        selectable, col = 0):
+        # Set dimensions.
+        if style == Table.PIECE_NORMAL or style == Table.PIECE_GHOST:
+            width = self.temp_width['triangle'] * cf.PIECE_SIZE_PERCENTAGE
+            shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
+            actual_width = width - shadow_thickness + 1
+        elif style == Table.PIECE_BAR or style == Table.PIECE_BORNE:
+            width = self.inner_border_thickness * cf.PIECE_SIZE_PERCENTAGE
+            shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
+            actual_width = width - shadow_thickness + 1
+
+        # Set coordinates.
+        if style == Table.PIECE_NORMAL or style == Table.PIECE_GHOST:
+            if style == Table.PIECE_NORMAL: i = len(target_pool)
+            else: i = len(self.game_pieces[col])
+            if 0 <= col <= 5 or 18 <= col <= 23:
+                half = 0
+            else: half = 1
+            factor1 = col % 6
+            factor2 = int(col / 12)
+            if factor2 == 0: factor3 = 1
+            else: factor3 = -1
+
+            offset_x_pc = (self.offset_x['half'][half] +
+                            self.temp_width['half'] * factor2 +
+                            (self.temp_width['triangle'] / 2 +
+                            self.temp_width['triangle'] * factor1) * factor3)
+
+            offset_y_pc = (self.offset_y['half'][half] +
+                            self.temp_height['half'] * factor2 +
+                            (actual_width / 2 + actual_width * i) * factor3)
+        elif style == Table.PIECE_BAR:
+            if self.player_colors[self.board.get_player()] == color:
+                factor = 1
+                i = 1
+            else:
+                factor = -1
+                i = 0
+            j = len(target_pool)
+
+            offset_x_pc = (self.offset_x['illusion'][1] -
                                 self.inner_border_thickness * (i + 0.5))
-                p = self.piece_pool.pop()
-                p.set_color(player_order[i][1])
-                p.draw(offset_x_pc, offset_y_pc, width, False)
-                self.borne_pieces[i].append(p)
+
+            offset_y_pc = (self.offset_y['illusion'][0] +
+                                self.temp_height['illusion'] * (1 - i) +
+                                (actual_width / 2 + actual_width * j) * factor)
+        elif style == Table.PIECE_BORNE:
+            if self.player_colors[self.board.get_player()] == color: i = 0
+            else: i = 1
+            j = len(target_pool)
+
+            offset_x_pc = (self.offset_x['label'][0] + self.temp_width['label']
+                            + actual_width * (j + 1.5))
+
+            offset_y_pc = (self.offset_y['global'] +
+                                self.temp_height['illusion'] * i +
+                                self.inner_border_thickness * (i + 0.5))
+
+        # Draw piece.
+        p = source_pool.pop()
+        p.set_color(color)
+        p.draw(offset_x_pc, offset_y_pc, width, selectable)
+        target_pool.append(p)
+        if aux_pool != None: aux_pool.append(p)
+
 
     def draw_canvas(self, init = False):
         if init:
