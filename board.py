@@ -31,7 +31,7 @@ class Board:
     def generate_dices(self):
         dice1 = random.randint(1, 6)
         dice2 = random.randint(1, 6) 
-        
+
         if (dice1 == dice2) :
             self.dices = [dice1, dice1, dice1, dice1]
         else:
@@ -87,9 +87,6 @@ class Board:
         return True
 
     def get_player_destinations(self, col):
-        # BUG: When one dice is 5, for a player piece on column 6 there is no
-        #       suggestion for moving on column 1, even if it is free.
-
         dest = [] # 25 = you can move it out 
 
         if (self.allSpaces[col][1] == self.player or
@@ -109,7 +106,7 @@ class Board:
                         break
                 if (t == False) :
                     for i in range(2):
-                        if (col - self.dices[i] > 1) :
+                        if (col - self.dices[i] >= 1) :
                             if (self.allSpaces[col - self.dices[i]][1] == self.player or
                                 self.allSpaces[col - self.dices[i]][1] == self.empty or
                                 (self.allSpaces[col - self.dices[i]][1] == self.computer and
@@ -117,7 +114,7 @@ class Board:
                                 dest.append(col - self.dices[i])
                 else:
                     for i in range(2):
-                        if (col - self.dices[i] > 1) :
+                        if (col - self.dices[i] >= 1) :
                             if (self.allSpaces[col - self.dices[i]][1] == self.player or
                                 self.allSpaces[col - self.dices[i]][1] == self.empty or
                                 (self.allSpaces[col - self.dices[i]][1] == self.computer and 

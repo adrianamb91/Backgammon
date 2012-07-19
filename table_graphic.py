@@ -64,6 +64,7 @@ class Table(object):
         if col != None:
             suggestions = self.board.get_player_destinations(col + 1)
             self.suggestions = set([s - 1 for s in suggestions])
+            print suggestions
         else: self.suggestions = set()
 
         self.draw_ghosts()
