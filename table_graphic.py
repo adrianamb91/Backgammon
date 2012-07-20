@@ -8,7 +8,6 @@ import table_graphic_config as cf
 
                 #TODO add piece borning suggestion
                 #TODO actual movement of piece when suggestion is clicked
-                #TODO dices drawing
 
 class Table(object):
     PLAYER = 'white'
@@ -27,16 +26,22 @@ class Table(object):
     temp_height = {}
     suggestions = set()
 
+    dice_drawing = { 1: [(1, 1)],
+                     2: [(0, 2), (2, 0)],
+                     3: [(0, 2), (1, 1), (2, 0)],
+                     4: [(0, 0), (0, 2), (2, 0), (2, 2)],
+                     5: [(0, 0), (0, 2), (1, 1), (2, 0), (2, 2)],
+                     6: [(0, 0), (0, 2), (1, 0), (1, 2), (2, 0), (2, 2)]}
 
     def __init__(self, width, height, board):
         self.board = board
         self.player_colors = { board.get_computer() : Table.COMPUTER,
                                board.get_player() : Table.PLAYER}
 
+        self.board.generate_dices()
         self.draw(width, height, True)
 
         pyglet.clock.schedule_interval(self.animate_pieces, cf.TICK_SIZE)
-        self.board.generate_dices()
 
 
     def mouse_motion(self, x, y, dx, dy):
@@ -64,7 +69,6 @@ class Table(object):
         if col != None:
             suggestions = self.board.get_player_destinations(col + 1)
             self.suggestions = set([s - 1 for s in suggestions])
-            print suggestions
         else: self.suggestions = set()
 
         self.draw_ghosts()
@@ -114,6 +118,11 @@ class Table(object):
         for label in self.labels:
             label.render()
 
+        for dice in self.dices:
+            dice.render()
+        for point in self.active_points:
+            point.render()
+
         for p in self.active_pieces:
             p.render_effects()
         for p in self.active_pieces:
@@ -147,6 +156,7 @@ class Table(object):
         self.draw_table_halves(init)
         self.draw_table_triangles(init)
         self.draw_table_home_labels(init)
+        self.draw_dices(init)
         self.draw_pieces(init)
         self.draw_ghosts(init)
 
@@ -534,6 +544,72 @@ class Table(object):
                                     cf.HOME_LABEL_TEXT_PROPORTION,
                                     cf.HOME_LABEL_TEXT_FONT,
                                     cf.HOME_LABEL_FG_COLOR)
+
+
+    def draw_dices(self, init = False):
+        self.temp_width['dice'] = (self.inner_border_thickness *
+                                                    cf.DICE_SIZE_PERCENTAGE)
+        corner_radius = self.temp_width['dice'] * cf.DICE_CORNER_RADIUS
+        spacing = (self.inner_border_thickness - self.temp_width['dice']) / 2
+        border = self.temp_width['dice'] * cf.DICE_SPACING_BORDER
+        point_space_width = (self.temp_width['dice'] - border) / 3
+        point_width = point_space_width * cf.DICE_POINT_WIDTH
+        point_radius = point_width / 2
+
+        if init:
+            self.dices = []
+            self.points = []
+
+            for i in range(12):
+                self.points.append(pm.Circle(0, 0, point_radius,
+                                                            cf.DICE_FG_COLOR))
+            self.active_points = []
+
+        self.offset_x['dice'] = []
+        self.offset_y['dice'] = []
+
+        for point in self.active_points:
+            self.points.append(point)
+        self.active_points = []
+
+        dices = self.board.get_dices()
+        print dices
+
+        for i in range(min(2, len(dices))):
+            self.offset_x['dice'].append(self.offset_x['illusion'][0] +
+                                            self.temp_width['illusion'] +
+                                            self.inner_border_thickness * i +
+                                            spacing)
+            self.offset_y['dice'].append(self.offset_y['illusion'][0] +
+                                            self.temp_height['illusion'] / 2 -
+                                            self.inner_border_thickness +
+                                            spacing)
+
+            if init:
+                self.dices.append(pm.RoundedRect(
+                                    self.offset_x['dice'][i],
+                                    self.offset_y['dice'][i],
+                                    self.temp_width['dice'],
+                                    self.temp_width['dice'], corner_radius,
+                                    cf.DICE_BG_COLOR))
+            else:
+                self.dices[i].draw(self.offset_x['dice'][i],
+                                    self.offset_y['dice'][i],
+                                    self.temp_width['dice'],
+                                    self.temp_width['dice'], corner_radius,
+                                    cf.DICE_BG_COLOR)
+
+            for j in range(dices[i]):
+                point = self.points.pop()
+                coords = self.dice_drawing[dices[i]][j]
+
+                offset_x = (self.offset_x['dice'][i] + border / 2 +
+                            point_space_width * (coords[0] + 0.5))
+                offset_y = (self.offset_y['dice'][i] + border / 2 +
+                            point_space_width * (coords[1] + 0.5))
+
+                point.draw(offset_x, offset_y, point_radius, cf.DICE_FG_COLOR)
+                self.active_points.append(point)
 
 if __name__ == '__main__':
     "Please do not run this file directly, include it."

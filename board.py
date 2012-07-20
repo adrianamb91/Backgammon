@@ -62,7 +62,7 @@ class Board:
                 return False
         return True
     
-    
+    # TODO dice number should be eliminated after making the move
     def move_player(self, col, n) :
         if (self.valid_player_move(col, n) == False) :
             print "Can't do the move"
