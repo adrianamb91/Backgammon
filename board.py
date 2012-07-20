@@ -62,12 +62,13 @@ class Board:
                 return False
         return True
     
-    # TODO dice number should be eliminated after making the move
+
     def move_player(self, col, n) :
         if (self.valid_player_move(col, n) == False) :
             print "Can't do the move"
             return False
         else:
+            self.dices.remove(n)
             if (col == 0) :
                 bar = self.allSpaces[0]
                 bar[2] -= 1
@@ -105,7 +106,7 @@ class Board:
                         t = False
                         break
                 if (t == False) :
-                    for i in range(2):
+                    for i in range(len(self.dices)):
                         if (col - self.dices[i] >= 1) :
                             if (self.allSpaces[col - self.dices[i]][1] == self.player or
                                 self.allSpaces[col - self.dices[i]][1] == self.empty or
@@ -113,7 +114,7 @@ class Board:
                                  self.allSpaces[col - self.dices[i]][0] == 1)) :
                                 dest.append(col - self.dices[i])
                 else:
-                    for i in range(2):
+                    for i in range(len(self.dices)):
                         if (col - self.dices[i] >= 1) :
                             if (self.allSpaces[col - self.dices[i]][1] == self.player or
                                 self.allSpaces[col - self.dices[i]][1] == self.empty or

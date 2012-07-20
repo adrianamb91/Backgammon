@@ -17,7 +17,7 @@ class Piece(object):
     selectable = False
     selector = None
 
-    def __init__(self, configuration, x, y, width, color, selectable):
+    def __init__(self, configuration, col, x, y, width, color, selectable):
         self.cf = configuration
         self.HOVER = self.cf.PIECE_SELECTOR_HOVER
         self.SELECTED = self.cf.PIECE_SELECTOR_SELECTED
@@ -43,7 +43,7 @@ class Piece(object):
 
         self.color = color
         self.selectable = selectable
-        self.draw(x, y, width, selectable, True)
+        self.draw(col, x, y, width, selectable, True)
 
 
     def render(self):
@@ -63,7 +63,8 @@ class Piece(object):
         self.color = color
 
 
-    def draw(self, x, y, width, selectable, init = False):
+    def draw(self, col, x, y, width, selectable, init = False):
+        self.col = col
         self.x = x
         self.y = y
         self.total_width = width
@@ -99,20 +100,28 @@ class Piece(object):
                 self.parts[i].draw(x, y, piece_width[i] / 2,
                                         self.colors[self.color][color_order[i]])
 
-        if self.selectable: self.draw_selector()
+        if self.selectable or init: self.draw_selector()
 
 
     def draw_selector(self):
-        if self.selectable:
+        if self.selector == None or self.selectable:
             start_radius = (self.width * (1 + self.cf.PIECE_SELECTOR_SPACING)) / 2
             delta_radius = self.width * self.cf.PIECE_SELECTOR_THICKNESS
-            
+
             if self.selector == None:
                 self.selector = pm.CircleOutline(self.x, self.y, start_radius,
                                                     delta_radius, self.CURRENT)
             else:
                 self.selector.draw(self.x, self.y, start_radius, delta_radius,
-                                    self.CURRENT)
+                                                                self.CURRENT)
+
+
+
+    def reset(self):
+        self.hover = False
+        self.selected = False
+        self.CURRENT = self.NONE
+        self.draw_selector()
 
 
     def mouse_motion(self, x, y, dx, dy):

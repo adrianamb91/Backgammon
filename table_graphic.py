@@ -7,7 +7,6 @@ import piece_graphic as piece
 import table_graphic_config as cf
 
                 #TODO add piece borning suggestion
-                #TODO actual movement of piece when suggestion is clicked
 
 class Table(object):
     PLAYER = 'white'
@@ -25,6 +24,7 @@ class Table(object):
     temp_width = {}
     temp_height = {}
     suggestions = set()
+    selected = None
 
     dice_drawing = { 1: [(1, 1)],
                      2: [(0, 2), (2, 0)],
@@ -56,20 +56,37 @@ class Table(object):
 
     def mouse_press_left(self, x, y):
         col = None
+        self.suggestions = set()
         for i in range(len(self.game_pieces)):
             for j in range(len(self.game_pieces[i])):
                 if self.game_pieces[i][j].mouse_press_left(x, y):
                     col = i
+                    self.selected = self.game_pieces[i][j]
 
         for bar in self.bar_pieces:
             for p in bar:
                 if p.mouse_press_left(x, y):
                     col = -1
+                    self.selected = p
 
         if col != None:
             suggestions = self.board.get_player_destinations(col + 1)
             self.suggestions = set([s - 1 for s in suggestions])
-        else: self.suggestions = set()
+        else:
+            for p in self.active_ghosts:
+                if p.mouse_press_left(x, y):
+                    self.move_piece(self.selected, p.x, p.y, p.total_width)
+                    self.board.move_player(self.selected.col + 1,
+                                                self.selected.col - p.col)
+                    self.draw_dices()
+
+                    self.game_pieces[p.col].append(self.selected)
+                    self.game_pieces[self.selected.col].remove(self.selected)
+                    if len(self.game_pieces[self.selected.col]) > 0:
+                        self.game_pieces[self.selected.col][-1].selectable = True
+
+                    self.selected = None
+                    p.reset()
 
         self.draw_ghosts()
 
@@ -77,11 +94,15 @@ class Table(object):
     def animate_pieces(self, dt):
         for p in self.animated:
             piece = p[0]
-            piece.draw(piece.x - p[1], piece.y - p[2], piece.total_width - p[3], False)
+            piece.draw(piece.col, piece.x - p[1], piece.y - p[2],
+                                            piece.total_width - p[3], False)
             piece.render()
             p[4] -= 1
 
-        self.animated[:] = [x for x in self.animated if x[4] > 0]
+        for p in self.animated:
+            if p[4] <= 0:
+                p[0].selectable = True
+                self.animated.remove(p)
 
 
     def move_piece(self, piece, x, y, width):
@@ -176,7 +197,7 @@ class Table(object):
         if init:
             self.piece_pool = []
             for i in range(30):
-                self.piece_pool.append(piece.Piece(cf, 0, 0, 1, Table.PLAYER,
+                self.piece_pool.append(piece.Piece(cf, 0, 0, 0, 1, Table.PLAYER,
                                                                         False))
 
         if not init:
@@ -214,8 +235,7 @@ class Table(object):
                 self.draw_piece(self.piece_pool, self.bar_pieces[i],
                                 self.active_pieces, Table.PIECE_BAR,
                                 self.player_colors[spaces[0][i * 2 + 1]],
-                                (j == spaces[0][i * 2] - 1 and
-                                self.player_colors[spaces[0][i * 2 + 1]] ==
+                                (elf.player_colors[spaces[0][i * 2 + 1]] ==
                                                                 Table.PLAYER))
                 piece_index[spaces[0][i * 2 + 1]] += 1
 
@@ -235,7 +255,7 @@ class Table(object):
         if init:
             self.ghost_pool = []
             for i in range(30):
-                self.ghost_pool.append(piece.Piece(cf, 0, 0, 1, Table.GHOST,
+                self.ghost_pool.append(piece.Piece(cf, 0, 0, 0, 1, Table.GHOST,
                                                                         False))
 
         if not init:
@@ -249,8 +269,19 @@ class Table(object):
                             None, Table.PIECE_GHOST, Table.GHOST, True, pos)
 
 
+    def set_selectable_pieces(self):
+        for p in self.game_pieces:
+            if len(p) > 0:
+                print p[-1] in self.animated
+                if not (p[-1] in self.animated):
+                    p[-1].selectable = True
+                else:
+                    print test
+
+
     def draw_piece(self, source_pool, target_pool, aux_pool, style, color,
                                                         selectable, col = 0):
+
         # Set dimensions.
         if style == Table.PIECE_NORMAL or style == Table.PIECE_GHOST:
             width = self.temp_width['triangle'] * cf.PIECE_SIZE_PERCENTAGE
@@ -311,7 +342,7 @@ class Table(object):
         # Draw piece.
         p = source_pool.pop()
         p.set_color(color)
-        p.draw(offset_x_pc, offset_y_pc, width, selectable)
+        p.draw(col, offset_x_pc, offset_y_pc, width, selectable)
         target_pool.append(p)
         if aux_pool != None: aux_pool.append(p)
 
@@ -573,7 +604,6 @@ class Table(object):
         self.active_points = []
 
         dices = self.board.get_dices()
-        print dices
 
         for i in range(min(2, len(dices))):
             self.offset_x['dice'].append(self.offset_x['illusion'][0] +
