@@ -3,43 +3,100 @@ from pyglet.gl import *
 from pyglet.graphics import *
 import math
 
-class Polygon(object):
+
+class Outline(object):
+    primitive_parts = None
+    coord_nr = {}
+
+    def __init__(self, vertices, color):
+        self.draw(vertices, color)
+
+    def render(self, style = pyglet.gl.GL_LINE_LOOP):
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
+        for part in self.primitive_parts:
+            part.draw(style)
+        pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
+
+    def draw(self, vertices_lists, color):
+        if self.primitive_parts == None:
+            self.color_nr = len(color)
+            self.primitive_parts = []
+
+        for i in range(len(vertices_lists)):
+            vertex_array = []
+            color_array = []
+            if len(self.primitive_parts) <= i:
+                self.coord_nr[i] = len(vertices_lists[i][0])
+
+            vertex_nr = len(vertices_lists[i])
+            for vertex in vertices_lists[i]:
+                for coord in vertex:
+                    vertex_array.append(coord)
+            if len(vertex_array) != vertex_nr * self.coord_nr[i]:
+                print "Incorrect vertex list"
+                self.primitive_parts = None
+                return
+
+            for j in range(vertex_nr):
+                for c in color:
+                    color_array.append(c)
+            if len(color_array) != vertex_nr * self.color_nr:
+                print "Incorrect colors list"
+                self.primitive = None
+                return
+
+            if len(self.primitive_parts) <= i:
+                self.primitive_parts.append(
+                    pyglet.graphics.vertex_list(vertex_nr,
+                            ('v' + str(self.coord_nr[i]) + 'f', vertex_array),
+                            ('c' + str(self.color_nr) + 'f', color_array)))
+            else:
+                self.primitive_parts[i].resize(vertex_nr)
+                self.primitive_parts[i].vertices = vertex_array
+                self.primitive_parts[i].colors = color_array
+
+
+class CircleOutline(Outline):
+    points = 60
+    angle_step = math.pi * 2 / points
+
+    def __init__(self, x, y, start_radius, delta_radius, color):
+        self.draw(x, y, start_radius, delta_radius, color)
+
+
+    def draw(self, x, y, start_radius, delta_radius, color):
+        levels = int(abs(delta_radius) + 1)
+        vertices_lists = []
+
+        for i in range(levels):
+            radius = start_radius + i
+
+            vertex_array = []
+            color_array = []
+
+            for j in range(self.points):
+                w = radius * math.cos(self.angle_step * j)
+                h = radius * math.sin(self.angle_step * j)
+
+                vertex_array.append((x + w, y + h))
+
+            vertices_lists.append(vertex_array)
+
+        super(CircleOutline, self).draw(vertices_lists, color)
+
+
+class Polygon(Outline):
     primitive = None
+
     def __init__(self, vertices, color):
         self.draw(vertices, color)
 
     def render(self):
-        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
-        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
-        self.primitive.draw(pyglet.gl.GL_POLYGON)
-        pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
+        super(Polygon, self).render(pyglet.gl.GL_POLYGON)
 
     def draw(self, vertices, color):
-        if self.primitive != None:
-            self.primitive.delete()
-
-        vertex_array = []
-        color_array = []
-
-        vertex_nr = len(vertices)
-        coord_nr = len(vertices[0])
-        color_nr = len(color)
-
-        for vertex in vertices:
-            for coord in vertex:
-                vertex_array.append(coord)
-        if len(vertex_array) != vertex_nr * coord_nr:
-            print "Incorrect vertex list"
-            self.primitive = None
-            return
-
-        for i in range(vertex_nr):
-            for c in color:
-                color_array.append(c)
-
-        self.primitive = pyglet.graphics.vertex_list(vertex_nr,
-                                    ('v' + str(coord_nr) + 'f', vertex_array),
-                                    ('c' + str(color_nr) + 'f', color_array))
+        super(Polygon, self).draw([vertices], color)
 
 
 class Rect(Polygon):
@@ -56,7 +113,7 @@ class Rect(Polygon):
 
 
 class Circle(Polygon):
-    points = 90
+    points = 60
     angle_step = math.pi * 2 / points
 
     def __init__(self, x, y, radius, color):
@@ -126,75 +183,6 @@ class RoundedLabel(RoundedRect):
                                         color = text_color,
                                         x = offset_x, y = offset_y,
                                         anchor_x = 'center', anchor_y = 'center')
-
-
-class Outline(object):
-    primitive_parts = []
-    def __init__(self, vertices, color):
-        self.draw(vertices, color)
-
-    def render(self):
-        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
-        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
-        for part in self.primitive_parts:
-            part.draw(pyglet.gl.GL_LINE_LOOP)
-        pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
-
-    def draw(self, vertices_lists, color):
-        for part in self.primitive_parts:
-            part.delete()
-        self.primitive_parts = []
-
-        for vertices in vertices_lists:
-            vertex_array = []
-            color_array = []
-
-            vertex_nr = len(vertices)
-            coord_nr = len(vertices[0])
-            color_nr = len(color)
-
-            for vertex in vertices:
-                for coord in vertex:
-                    vertex_array.append(coord)
-            if len(vertex_array) != vertex_nr * coord_nr:
-                print "Incorrect vertex list"
-                self.primitive_parts = None
-                return
-
-            for i in range(vertex_nr):
-                for c in color:
-                    color_array.append(c)
-
-            self.primitive_parts.append(pyglet.graphics.vertex_list(vertex_nr,
-                                       ('v' + str(coord_nr) + 'f', vertex_array),
-                                       ('c' + str(color_nr) + 'f', color_array)))
-
-class CircleOutline(Outline):
-    points = 90
-    angle_step = math.pi * 2 / points
-
-    def __init__(self, x, y, start_radius, delta_radius, color):
-        self.draw(x, y, start_radius, delta_radius, color)
-
-
-    def draw(self, x, y, start_radius, delta_radius, color):
-        levels = int(abs(delta_radius) + 1)
-        vertices_lists = []
-
-        for i in range(levels):
-            radius = start_radius + i
-            vertex_array = []
-            color_array = []
-
-            for j in range(self.points):
-                w = radius * math.cos(self.angle_step * j)
-                h = radius * math.sin(self.angle_step * j)
-
-                vertex_array.append((x + w, y + h))
-
-            vertices_lists.append(vertex_array)
-
-        super(CircleOutline, self).draw(vertices_lists, color)
 
 
 if __name__ == '__main__':

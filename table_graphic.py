@@ -112,7 +112,7 @@ class Table(object):
         for p in self.animated:
             piece = p[0]
             piece.draw(piece.col, piece.x - p[1], piece.y - p[2],
-                                            piece.total_width - p[3], False)
+                                            piece.total_width - p[3], True)
             piece.render()
             p[4] -= 1
 
@@ -293,16 +293,6 @@ class Table(object):
                 self.draw_piece(self.ghost_pool, self.table_ghosts,
                                 self.active_ghosts, Table.PIECE_GHOST,
                                 Table.GHOST, True, pos)
-
-
-    def set_selectable_pieces(self):
-        for p in self.game_pieces:
-            if len(p) > 0:
-                print p[-1] in self.animated
-                if not (p[-1] in self.animated):
-                    p[-1].selectable = True
-                else:
-                    print test
 
 
     def draw_piece(self, source_pool, target_pool, aux_pool, style, color,
