@@ -6,7 +6,7 @@ import piece_graphic as piece
 
 import table_graphic_config as cf
 
-                #TODO add piece borning suggestion
+    # TODO move piece to bar when needed
 
 class Table(object):
     PLAYER = 'white'
@@ -17,6 +17,7 @@ class Table(object):
     PIECE_BAR = 1
     PIECE_BORNE = 2
     PIECE_GHOST = 3
+    PIECE_BORNE_GHOST = 4
 
     animated = []
     offset_x = {}
@@ -73,7 +74,7 @@ class Table(object):
             suggestions = self.board.get_player_destinations(col + 1)
             self.suggestions = set([s - 1 for s in suggestions])
         else:
-            for p in self.active_ghosts:
+            for p in self.table_ghosts:
                 if p.mouse_press_left(x, y):
                     self.move_piece(self.selected, p.x, p.y, p.total_width)
                     self.board.move_player(self.selected.col + 1,
@@ -85,6 +86,22 @@ class Table(object):
                     if len(self.game_pieces[self.selected.col]) > 0:
                         self.game_pieces[self.selected.col][-1].selectable = True
 
+                    self.selected = None
+                    p.reset()
+            if self.selected != None:
+                for p in self.borne_ghosts:
+                    if p.mouse_press_left(x, y):
+                        self.move_piece(self.selected, p.x, p.y, p.total_width)
+                        self.board.move_player(self.selected.col + 1,
+                                                self.selected.col + 1)
+                    self.draw_dices()
+
+                    self.borne_pieces[0].append(self.selected)
+                    self.game_pieces[self.selected.col].remove(self.selected)
+                    if len(self.game_pieces[self.selected.col]) > 0:
+                        self.game_pieces[self.selected.col][-1].selectable = True
+
+                    self.selected.borned = True
                     self.selected = None
                     p.reset()
 
@@ -101,7 +118,7 @@ class Table(object):
 
         for p in self.animated:
             if p[4] <= 0:
-                p[0].selectable = True
+                p[0].animated = False
                 self.animated.remove(p)
 
 
@@ -117,6 +134,7 @@ class Table(object):
         step_x = dx / steps
         step_y = dy / steps
         step_w = dw / steps
+        piece.animated = True
 
         self.animated.append([piece, step_x, step_y, step_w, steps])
 
@@ -263,10 +281,18 @@ class Table(object):
                 self.ghost_pool.append(p)
 
         self.active_ghosts = []
+        self.table_ghosts = []
+        self.borne_ghosts = []
 
         for pos in self.suggestions:
-            self.draw_piece(self.ghost_pool, self.active_ghosts,
-                            None, Table.PIECE_GHOST, Table.GHOST, True, pos)
+            if pos == 24:
+                self.draw_piece(self.ghost_pool, self.borne_ghosts,
+                                self.active_ghosts, Table.PIECE_BORNE_GHOST,
+                                Table.GHOST, True)
+            else:
+                self.draw_piece(self.ghost_pool, self.table_ghosts,
+                                self.active_ghosts, Table.PIECE_GHOST,
+                                Table.GHOST, True, pos)
 
 
     def set_selectable_pieces(self):
@@ -287,7 +313,8 @@ class Table(object):
             width = self.temp_width['triangle'] * cf.PIECE_SIZE_PERCENTAGE
             shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
             actual_width = width - shadow_thickness + 1
-        elif style == Table.PIECE_BAR or style == Table.PIECE_BORNE:
+        elif (style == Table.PIECE_BAR or style == Table.PIECE_BORNE or
+                style == Table.PIECE_BORNE_GHOST):
             width = self.inner_border_thickness * cf.PIECE_SIZE_PERCENTAGE
             shadow_thickness = width * cf.PIECE_SHADOW_THICKNESS
             actual_width = width - shadow_thickness + 1
@@ -327,10 +354,13 @@ class Table(object):
             offset_y_pc = (self.offset_y['illusion'][0] +
                                 self.temp_height['illusion'] * (1 - i) +
                                 (actual_width / 2 + actual_width * j) * factor)
-        elif style == Table.PIECE_BORNE:
-            if self.player_colors[self.board.get_player()] == color: i = 0
+        elif style == Table.PIECE_BORNE or style == Table.PIECE_BORNE_GHOST:
+            if (self.player_colors[self.board.get_player()] == color or
+                style == Table.PIECE_BORNE_GHOST): i = 0
             else: i = 1
-            j = len(target_pool)
+
+            if style == Table.PIECE_BORNE_GHOST: j = len(self.borne_pieces[i])
+            else: j = len(target_pool)
 
             offset_x_pc = (self.offset_x['label'][0] + self.temp_width['label']
                             + actual_width * (j + 1.5))

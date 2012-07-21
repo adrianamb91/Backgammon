@@ -22,6 +22,18 @@ class Board:
         self.allSpaces[17] = (3, self.computer)
         self.allSpaces[19] = (5, self.computer)
         self.allSpaces[24] = (2, self.player)
+
+        # Testing purposes, do not remove please
+#        self.allSpaces[0] = (0, self.computer, 0, self.player)
+#        self.allSpaces[1] = (1, self.player)
+#        self.allSpaces[2] = (1, self.player)
+#        self.allSpaces[3] = (1, self.player)
+#        self.allSpaces[4] = (1, self.player)
+#        self.allSpaces[5] = (1, self.player)
+#        self.allSpaces[6] = (1, self.player)
+#        self.allSpaces[12] = (5, self.computer)
+#        self.allSpaces[17] = (3, self.computer)
+#        self.allSpaces[19] = (5, self.computer)
         
         for i in range(25) :
             self.allSpaces[i] = list(self.allSpaces[i])
@@ -121,7 +133,7 @@ class Board:
                                 (self.allSpaces[col - self.dices[i]][1] == self.computer and 
                                  self.allSpaces[col - self.dices[i]][0] == 1)) : 
                                 dest.append(col - self.dices[i])
-                        else :
+                        elif (col == self.dices[i]) :
                             dest.append(25)
             return dest
         else:

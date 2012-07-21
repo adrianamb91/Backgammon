@@ -12,6 +12,8 @@ class Piece(object):
     SELECTED = NONE
     CURRENT = NONE
 
+    borned = False
+    animated = False
     hover = False
     selected = False
     selectable = False
@@ -125,7 +127,7 @@ class Piece(object):
 
 
     def mouse_motion(self, x, y, dx, dy):
-        if self.selectable:
+        if self.selectable and not self.animated and not self.borned:
             radius = (self.width / 2) ** 2
             dist = (x - self.x) * (x - self.x) + (y - self.y) * (y - self.y)
 
@@ -148,7 +150,7 @@ class Piece(object):
 
 
     def mouse_press_left(self, x, y):
-        if self.selectable:
+        if self.selectable and not self.animated and not self.borned:
             radius = (self.width / 2) ** 2
             dist = (x - self.x) * (x - self.x) + (y - self.y) * (y - self.y)
 
