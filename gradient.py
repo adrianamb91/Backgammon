@@ -23,7 +23,7 @@ class Gradient(object):
 
 
 class CircularGradient(Gradient):
-    points = 180
+    points = 90
     angle_step = math.pi * 2 / points
 
     def __init__(self, x, y, start_color, end_color, start_radius, end_radius):
@@ -34,7 +34,8 @@ class CircularGradient(Gradient):
         Gradient.draw(self)
 
         delta_radius = end_radius - start_radius
-        levels = int(abs(delta_radius) * 1.5)
+        levels = int(abs(delta_radius) + 1)
+        overflow = int(abs(delta_radius) * 0.3)
 
         if levels > 1:
             radius_step = delta_radius / abs(delta_radius)
@@ -47,17 +48,19 @@ class CircularGradient(Gradient):
             vertex_array = []
             color_array = []
 
-            for i in range(levels):
-                radius = start_radius + i * radius_step
-                color = [self.start_color[0] + red_step * i,
-                         self.start_color[1] + green_step * i,
-                         self.start_color[2] + blue_step * i,
-                         self.start_color[3] + alpha_step * i]
-                
+            for i in range(levels + overflow):
+                if i <= levels: factor = i
+                else: factor = levels
+
+                radius = start_radius + factor * radius_step
+                color = [self.start_color[0] + red_step * factor,
+                         self.start_color[1] + green_step * factor,
+                         self.start_color[2] + blue_step * factor,
+                         self.start_color[3] + alpha_step * factor]
+
                 vertex_array = []
                 color_array = []
-                
-                
+
                 for j in range(self.points):
                     w = radius * math.cos(self.angle_step * j)
                     h = radius * math.sin(self.angle_step * j)
