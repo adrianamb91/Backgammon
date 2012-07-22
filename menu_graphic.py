@@ -30,6 +30,8 @@ class Menu(object):
         self.content_bg.render()
         self.title.draw()
         self.subtitle.draw()
+        for button in self.main_buttons:
+            button.render()
 
 
     def draw(self, w, h, init = False):
@@ -41,6 +43,7 @@ class Menu(object):
         self.draw_border(init)
         self.draw_content_bg(init)
         self.draw_title(init)
+        self.draw_buttons(init)
 
 
     def resize(self):
@@ -120,6 +123,46 @@ class Menu(object):
                                         x = self.offset_x['subtitle'],
                                         y = self.offset_y['subtitle'],
                                         anchor_x = 'center', anchor_y = 'top')
+
+    def draw_buttons(self, init = False):
+        self.temp_width['button'] = self.temp_width['content_bg'] * cf.BUTTON_MAIN_WIDTH
+        self.temp_height['button'] = self.temp_height['content_bg'] * cf.BUTTON_MAIN_HEIGHT
+        corner_radius = self.temp_height['button'] * cf.BUTTON_MAIN_CORNER_RADIUS
+        top_spacer = self.temp_height['content_bg'] * cf.BUTTON_MAIN_TOP_SPACER
+        left_spacer = self.temp_width['content_bg'] * cf.BUTTON_MAIN_LEFT_SPACER
+        spacer = self.temp_height['content_bg'] * cf.BUTTON_MAIN_SPACER
+        text = [cf.BUTTON_MAIN_TEXT_NEW, cf.BUTTON_MAIN_TEXT_ABOUT, cf.BUTTON_MAIN_TEXT_EXIT]
+
+        if init:
+            self.main_buttons = []
+
+        self.offset_x['button'] = []
+        self.offset_y['button'] = []
+
+        for i in range(len(text)):
+            self.offset_x['button'].append(self.offset_x['content_bg'] + left_spacer)
+            self.offset_y['button'].append(self.offset_y['content_bg'] + self.temp_height['content_bg'] - top_spacer - spacer * i - self.temp_height['button'] * i)
+
+            if init:
+                self.main_buttons.append(pm.RoundedLabel(
+                                self.offset_x['button'][i],
+                                self.offset_y['button'][i],
+                                self.temp_width['button'],
+                                self.temp_height['button'], corner_radius,
+                                cf.BUTTON_MAIN_BG_COLOR, text[i],
+                                cf.BUTTON_MAIN_TEXT_PROPORTION,
+                                cf.BUTTON_MAIN_TEXT_FONT,
+                                cf.BUTTON_MAIN_FG_COLOR))
+            else:
+                self.main_buttons[i].draw(
+                                self.offset_x['button'][i],
+                                self.offset_y['button'][i],
+                                self.temp_width['button'],
+                                self.temp_height['button'], corner_radius,
+                                cf.BUTTON_MAIN_BG_COLOR, text[i],
+                                cf.BUTTON_MAIN_TEXT_PROPORTION,
+                                cf.BUTTON_MAIN_TEXT_FONT,
+                                cf.BUTTON_MAIN_FG_COLOR)
 
 if __name__ == '__main__':
     "Please do not run this file directly, include it."
