@@ -14,7 +14,7 @@ class Outline(object):
     def render(self, style = pyglet.gl.GL_LINE_LOOP):
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
-        for part in self.primitive_parts:
+        for part in self.primitive_parts[:self.levels]:
             part.draw(style)
         pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
 
@@ -22,8 +22,9 @@ class Outline(object):
         if self.primitive_parts == None:
             self.color_nr = len(color)
             self.primitive_parts = []
+        self.levels = len(vertices_lists)
 
-        for i in range(len(vertices_lists)):
+        for i in range(self.levels):
             vertex_array = []
             color_array = []
             if len(self.primitive_parts) <= i:
