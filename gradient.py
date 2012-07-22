@@ -127,5 +127,57 @@ class RectGradient(Gradient):
                     self.gradient_parts[i].colors = color_array
 
 
+class BandGradient(Gradient):
+    VERTICAL = 0
+    HORIZONTAL = 1
+
+    def __init__(self, x, y, width, height, start_color, end_color,
+                                        orientation = VERTICAL):
+        Gradient.__init__(self, start_color, end_color)
+        self.draw(x, y, width, height, orientation)
+
+
+    def draw(self, x, y, width, height, orientation = VERTICAL):
+        if orientation == BandGradient.VERTICAL: delta = height
+        else: delta = width
+        levels = int(abs(delta) + 1)
+        self.levels = levels
+
+        if levels > 1:
+            step = delta / abs(delta)
+
+            red_step = (self.end_color[0] - self.start_color[0]) / levels
+            green_step = (self.end_color[1] - self.start_color[1]) / levels
+            blue_step = (self.end_color[2] - self.start_color[2]) / levels
+            alpha_step = (self.end_color[3] - self.start_color[3]) / levels
+
+            for i in range(levels):
+                dist = i * step
+                color = [self.start_color[0] + red_step * i,
+                         self.start_color[1] + green_step * i,
+                         self.start_color[2] + blue_step * i,
+                         self.start_color[3] + alpha_step * i]
+
+                vertex_array = []
+                color_array = []
+
+                for j in range(2):
+                    vertex_array.append(x + width * j)
+                    vertex_array.append(y + dist)
+                    for c in color:
+                        if c < 0: c = 0
+                        elif c > 1: c = 1
+                        color_array.append(c)
+
+                if i >= len(self.gradient_parts):
+                    self.gradient_parts.append(
+                        pyglet.graphics.vertex_list(2,
+                                                    ('v2f', vertex_array),
+                                                    ('c4f', color_array)))
+                else:
+                    self.gradient_parts[i].vertices = vertex_array
+                    self.gradient_parts[i].colors = color_array
+
+
 if __name__ == '__main__':
     "Please do not run this file directly, include it."

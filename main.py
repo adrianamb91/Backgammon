@@ -3,7 +3,7 @@ from pyglet.gl import *
 
 import backgammon_config as cf
 import table_graphic
-#import menu_graphic
+import menu_graphic
 import board
 
 class BackgammonWindow(pyglet.window.Window):
@@ -19,10 +19,10 @@ class BackgammonWindow(pyglet.window.Window):
 
         self.BOARD = board.Board()
         self.GAME_TABLE = table_graphic.Table(self.width, self.height, self.BOARD)
-        #self.MENU = menu_graphic.Menu()
+        self.MENU = menu_graphic.Menu(self.width, self.height)
 
-        self.CURRENT_SCREEN = self.GAME_TABLE
-        #self.CURRENT_SCREEN = self.MENU
+        #self.CURRENT_SCREEN = self.GAME_TABLE
+        self.CURRENT_SCREEN = self.MENU
 
 
     def on_draw(self):

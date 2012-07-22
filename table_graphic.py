@@ -54,6 +54,8 @@ class Table(object):
             if p.mouse_motion(x, y, dx, dy):
                 return True
 
+        return False
+
 
     def mouse_press_left(self, x, y):
         col = None
