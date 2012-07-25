@@ -13,7 +13,9 @@ class Menu(object):
     temp_width = {}
     temp_height = {}
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, statistic):
+        self.statistic = statistic
+
         self.draw(width, height, True)
 
 
@@ -43,6 +45,7 @@ class Menu(object):
         self.subtitle.draw()
         for button in self.main_buttons:
             button.render()
+        self.render_statistic()
 
 
     def draw(self, w, h, init = False):
@@ -55,6 +58,7 @@ class Menu(object):
         self.draw_content_bg(init)
         self.draw_title(init)
         self.draw_buttons(init)
+        self.draw_statistic(init)
 
 
     def resize(self):
@@ -140,8 +144,9 @@ class Menu(object):
         self.temp_height['button'] = self.temp_height['content_bg'] * cf.BUTTON_MAIN_HEIGHT
         top_spacer = self.temp_height['content_bg'] * cf.BUTTON_MAIN_TOP_SPACER
         left_spacer = self.temp_width['content_bg'] * cf.BUTTON_MAIN_LEFT_SPACER
+        self.buttons_left_spacer = left_spacer
         spacer = self.temp_height['content_bg'] * cf.BUTTON_MAIN_SPACER
-        text = [cf.BUTTON_MAIN_TEXT_NEW, cf.BUTTON_MAIN_TEXT_ABOUT, cf.BUTTON_MAIN_TEXT_EXIT]
+        text = [cf.BUTTON_MAIN_TEXT_NEW, cf.BUTTON_MAIN_TEXT_RESET, cf.BUTTON_MAIN_TEXT_ABOUT, cf.BUTTON_MAIN_TEXT_EXIT]
 
         if init:
             self.main_buttons = []
@@ -165,6 +170,51 @@ class Menu(object):
                                             self.offset_y['button'][i],
                                             self.temp_width['button'],
                                             self.temp_height['button'])
+
+
+    def render_statistic(self):
+        self.statistic_title.draw()
+        self.statistic_container.render()
+
+
+    def draw_statistic(self, init = False):
+        left_spacer = self.temp_width['content_bg'] * cf.STATISTIC_LEFT_SPACER
+        top_spacer = self.temp_height['content_bg'] * cf.STATISTIC_TOP_SPACER
+        self.offset_x['statistic'] = self.offset_x['content_bg'] + self.buttons_left_spacer + self.temp_width['button'] + left_spacer
+        self.offset_y['statistic'] = self.offset_y['content_bg'] + self.temp_height['content_bg'] - top_spacer
+        self.temp_width['statistic'] = self.temp_width['content_bg'] * cf.STATISTIC_WIDTH_PERCENTAGE
+        self.temp_height['statistic'] = self.temp_height['content_bg'] * cf.STATISTIC_HEIGHT_PERCENTAGE
+
+        title_height = self.temp_height['statistic'] * cf.STATISTIC_TITLE_HEIGHT_PERCENTAGE
+        title_bottom_spacer = self.temp_height['statistic'] * cf.STATISTIC_TITLE_BOTTOM_SPACER
+        title_left_spacer = self.temp_height['statistic'] * cf.STATISTIC_TITLE_LEFT_SPACER
+        offset_x_title = self.offset_x['statistic'] + title_left_spacer
+        offset_y_title = self.offset_y['statistic'] - title_height
+
+        container_width = self.temp_width['statistic']
+        container_height = self.temp_height['statistic'] - title_height - title_bottom_spacer
+        offset_x_cont = self.offset_x['statistic']
+        offset_y_cont = offset_y_title - title_bottom_spacer
+
+
+        self.statistic_title = pyglet.text.Label(
+                                    text = cf.STATISTIC_TITLE_TEXT,
+                                    font_name = cf.STATISTIC_TITLE_FONT,
+                                    font_size = title_height,
+                                    color = cf.STATISTIC_TITLE_COLOR,
+                                    x = offset_x_title, y = offset_y_title,
+                                    anchor_x = 'left', anchor_y = 'bottom')
+
+        if init:
+            self.statistic_container = pm.Rect(offset_x_cont,
+                                            offset_y_cont - container_height,
+                                            container_width, container_height,
+                                            cf.STATISTIC_CONTAINER_COLOR)
+        else:
+            self.statistic_container.draw(offset_x_cont,
+                                            offset_y_cont - container_height,
+                                            container_width, container_height,
+                                            cf.STATISTIC_CONTAINER_COLOR)
 
 
 if __name__ == '__main__':

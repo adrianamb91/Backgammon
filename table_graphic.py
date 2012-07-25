@@ -34,8 +34,9 @@ class Table(object):
                      5: [(0, 0), (0, 2), (1, 1), (2, 0), (2, 2)],
                      6: [(0, 0), (0, 2), (1, 0), (1, 2), (2, 0), (2, 2)]}
 
-    def __init__(self, width, height, board):
+    def __init__(self, width, height, board, statistic):
         self.board = board
+        self.statistic = statistic
         self.player_colors = { board.get_computer() : Table.COMPUTER,
                                board.get_player() : Table.PLAYER}
 

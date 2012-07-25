@@ -5,6 +5,7 @@ import backgammon_config as cf
 import table_graphic
 import menu_graphic
 import board
+import backgammon_statistic as bs
 
 class BackgammonWindow(pyglet.window.Window):
     def __init__(self, config):
@@ -18,8 +19,10 @@ class BackgammonWindow(pyglet.window.Window):
         self.cursor_default = self.get_system_mouse_cursor(self.CURSOR_DEFAULT)
 
         self.BOARD = board.Board()
-        self.GAME_TABLE = table_graphic.Table(self.width, self.height, self.BOARD)
-        self.MENU = menu_graphic.Menu(self.width, self.height)
+        self.STATISTIC = bs.Statistic()
+        self.GAME_TABLE = table_graphic.Table(self.width, self.height,
+                                                self.BOARD, self.STATISTIC)
+        self.MENU = menu_graphic.Menu(self.width, self.height, self.STATISTIC)
 
         #self.CURRENT_SCREEN = self.GAME_TABLE
         self.CURRENT_SCREEN = self.MENU
