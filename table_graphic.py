@@ -58,6 +58,10 @@ class Table(object):
 
 
     def mouse_press_left(self, x, y):
+        pass
+
+
+    def mouse_release_left(self, x, y):
         col = None
         self.suggestions = set()
         for i in range(len(self.game_pieces)):

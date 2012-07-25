@@ -25,8 +25,14 @@ class Menu(object):
         return False
 
 
+    def mouse_release_left(self, x, y):
+        for button in self.main_buttons:
+            button.mouse_release_left(x, y)
+
+
     def mouse_press_left(self, x, y):
-        return False
+        for button in self.main_buttons:
+            button.mouse_press_left(x, y)
 
 
     def render(self):

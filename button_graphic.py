@@ -11,6 +11,7 @@ class Button(object):
         self.cf = configuration
         self.text = text
         self.hover = False
+        self.pressed = False
 
         self.BG_COLOR = self.cf.BUTTON_MAIN_BG_COLOR
         self.FG_COLOR = self.cf.BUTTON_MAIN_FG_COLOR
@@ -44,7 +45,10 @@ class Button(object):
 
 
     def change_state(self):
-        if self.hover:
+        if self.pressed:
+            self.BG_COLOR = self.cf.BUTTON_MAIN_BG_PRESS_COLOR
+            self.FG_COLOR = self.cf.BUTTON_MAIN_FG_PRESS_COLOR
+        elif self.hover:
             self.BG_COLOR = self.cf.BUTTON_MAIN_BG_HOVER_COLOR
             self.FG_COLOR = self.cf.BUTTON_MAIN_FG_HOVER_COLOR
         else:
@@ -54,9 +58,12 @@ class Button(object):
         self.draw(self.x, self.y, self.width, self.height)
 
 
-    def mouse_motion(self, x, y, dx, dy):
-        over = ((self.x <= x <= self.x + self.width) and
+    def is_over(self, x, y):
+        return ((self.x <= x <= self.x + self.width) and
                 (self.y <= y <= self.y + self.height))
+
+    def mouse_motion(self, x, y, dx, dy):
+        over = self.is_over(x, y)
 
         if over:
             if not self.hover:
@@ -71,8 +78,26 @@ class Button(object):
 
         return False
 
+    def mouse_press_left(self, x, y):
+        over = self.is_over(x, y)
 
+        if over:
+            self.pressed = True
+            self.change_state()
+        else:
+            if self.pressed:
+                self.pressed = False
+                self.change_state()
 
+    def mouse_release_left(self, x, y):
+        over = self.is_over(x, y)
+
+        if over and self.pressed:
+            pass
+
+        if self.pressed:
+            self.pressed = False
+            self.change_state()
 
 
 
