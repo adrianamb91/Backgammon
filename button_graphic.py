@@ -13,8 +13,8 @@ class Button(object):
         self.hover = False
         self.pressed = False
 
-        self.BG_COLOR = self.cf.BUTTON_MAIN_BG_COLOR
-        self.FG_COLOR = self.cf.BUTTON_MAIN_FG_COLOR
+        self.BG_COLOR = self.cf.BUTTON_BG_COLOR
+        self.FG_COLOR = self.cf.BUTTON_FG_COLOR
 
         self.draw(x, y, width, height, True)
 
@@ -34,26 +34,26 @@ class Button(object):
         if init:
             self.button = pm.RoundedLabel(x, y, width, height, corner_radius,
                                             self.BG_COLOR, self.text,
-                                            self.cf.BUTTON_MAIN_TEXT_PROPORTION,
-                                            self.cf.BUTTON_MAIN_TEXT_FONT,
+                                            self.cf.BUTTON_TEXT_PROPORTION,
+                                            self.cf.BUTTON_TEXT_FONT,
                                             self.FG_COLOR)
         else:
             self.button.draw(x, y, width, height, corner_radius,
                                 self.BG_COLOR, self.text,
-                                self.cf.BUTTON_MAIN_TEXT_PROPORTION,
-                                self.cf.BUTTON_MAIN_TEXT_FONT, self.FG_COLOR)
+                                self.cf.BUTTON_TEXT_PROPORTION,
+                                self.cf.BUTTON_TEXT_FONT, self.FG_COLOR)
 
 
     def change_state(self):
         if self.pressed:
-            self.BG_COLOR = self.cf.BUTTON_MAIN_BG_PRESS_COLOR
-            self.FG_COLOR = self.cf.BUTTON_MAIN_FG_PRESS_COLOR
+            self.BG_COLOR = self.cf.BUTTON_BG_PRESS_COLOR
+            self.FG_COLOR = self.cf.BUTTON_FG_PRESS_COLOR
         elif self.hover:
-            self.BG_COLOR = self.cf.BUTTON_MAIN_BG_HOVER_COLOR
-            self.FG_COLOR = self.cf.BUTTON_MAIN_FG_HOVER_COLOR
+            self.BG_COLOR = self.cf.BUTTON_BG_HOVER_COLOR
+            self.FG_COLOR = self.cf.BUTTON_FG_HOVER_COLOR
         else:
-            self.BG_COLOR = self.cf.BUTTON_MAIN_BG_COLOR
-            self.FG_COLOR = self.cf.BUTTON_MAIN_FG_COLOR
+            self.BG_COLOR = self.cf.BUTTON_BG_COLOR
+            self.FG_COLOR = self.cf.BUTTON_FG_COLOR
 
         self.draw(self.x, self.y, self.width, self.height)
 
@@ -92,19 +92,14 @@ class Button(object):
     def mouse_release_left(self, x, y):
         over = self.is_over(x, y)
 
-        if over and self.pressed:
-            pass
-
         if self.pressed:
             self.pressed = False
             self.change_state()
 
+            if over:
+                return True
 
+        return False
 
-
-
-
-                
-                
 if __name__ == '__main__':
     "Please do not run this file directly, include it."

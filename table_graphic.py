@@ -113,6 +113,7 @@ class Table(object):
                     p.reset()
 
         self.draw_ghosts()
+        return False
 
 
     def animate_pieces(self, dt):

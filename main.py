@@ -52,7 +52,8 @@ class BackgammonWindow(pyglet.window.Window):
 
     def on_mouse_release(self, x, y, button, modifiers):
         if button == pyglet.window.mouse.LEFT:
-            self.CURRENT_SCREEN.mouse_release_left(x, y)
+            if self.CURRENT_SCREEN.mouse_release_left(x, y):
+                self.close()
 
 
 if __name__ == '__main__':

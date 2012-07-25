@@ -14,6 +14,16 @@ class Menu(object):
     temp_width = {}
     temp_height = {}
 
+    ACTION_NEW_GAME = 0
+    ACTION_RESET_STATS = 1
+    ACTION_ABOUT = 2
+    ACTION_EXIT = 3
+
+    DIALOG_NEW_GAME = 0
+    DIALOG_ABOUT = 1
+
+    current_dialog = None
+
     def __init__(self, width, height, statistic):
         self.statistic = statistic
 
@@ -21,21 +31,43 @@ class Menu(object):
 
 
     def mouse_motion(self, x, y, dx, dy):
-        for button in self.main_buttons:
-            if button.mouse_motion(x, y, dx, dy):
+        if self.current_dialog == None:
+            for button in self.main_buttons:
+                if button[0].mouse_motion(x, y, dx, dy):
+                    return True
+        else:
+            if self.dialog_close.mouse_motion(x, y, dx, dy):
                 return True
 
         return False
 
 
     def mouse_release_left(self, x, y):
-        for button in self.main_buttons:
-            button.mouse_release_left(x, y)
+        if self.current_dialog == None:
+            for button in self.main_buttons:
+                if button[0].mouse_release_left(x, y):
+                    if button[1] == Menu.ACTION_NEW_GAME:
+                        self.draw_dialog(Menu.DIALOG_NEW_GAME, True)
+                    elif button[1] == Menu.ACTION_RESET_STATS:
+                        self.statistic.reset()
+                        self.draw_statistic()
+                    elif button[1] == Menu.ACTION_ABOUT:
+                        self.draw_dialog(Menu.DIALOG_ABOUT, True)
+                    elif button[1] == Menu.ACTION_EXIT:
+                        return True
+        else:
+            if self.dialog_close.mouse_release_left(x, y):
+                self.current_dialog = None
+                self.render()
+        return False
 
 
     def mouse_press_left(self, x, y):
-        for button in self.main_buttons:
-            button.mouse_press_left(x, y)
+        if self.current_dialog == None:
+            for button in self.main_buttons:
+                button[0].mouse_press_left(x, y)
+        else:
+            self.dialog_close.mouse_press_left(x, y)
 
 
     def render(self):
@@ -45,8 +77,9 @@ class Menu(object):
         self.title.draw()
         self.subtitle.draw()
         for button in self.main_buttons:
-            button.render()
+            button[0].render()
         self.render_statistic()
+        self.render_dialog()
 
 
     def draw(self, w, h, init = False):
@@ -60,6 +93,8 @@ class Menu(object):
         self.draw_title(init)
         self.draw_buttons(init)
         self.draw_statistic(init)
+
+        self.draw_dialog(self.current_dialog)
 
 
     def resize(self):
@@ -149,6 +184,7 @@ class Menu(object):
         spacer_horizontal = self.temp_width['content_bg'] * cf.BUTTON_MAIN_HORIZONTAL_SPACER
         spacer_vertical = self.temp_height['content_bg'] * cf.BUTTON_MAIN_VERTICAL_SPACER
         text = [cf.BUTTON_MAIN_TEXT_NEW, cf.BUTTON_MAIN_TEXT_RESET, cf.BUTTON_MAIN_TEXT_ABOUT, cf.BUTTON_MAIN_TEXT_EXIT]
+        action = [Menu.ACTION_NEW_GAME, Menu.ACTION_RESET_STATS, Menu.ACTION_ABOUT, Menu.ACTION_EXIT]
 
         if init:
             self.main_buttons = []
@@ -161,17 +197,18 @@ class Menu(object):
             self.offset_y['button'].append(self.offset_y['content_bg'] + self.temp_height['content_bg'] - top_spacer - (self.temp_height['button'] + spacer_vertical) * (int(i / 2)))
 
             if init:
-                self.main_buttons.append(btn.Button(cf,
+                self.main_buttons.append([btn.Button(cf,
                                                     self.offset_x['button'][i],
                                                     self.offset_y['button'][i],
                                                     self.temp_width['button'],
                                                     self.temp_height['button'],
-                                                    text[i]))
+                                                    text[i]),
+                                            action[i]])
             else:
-                self.main_buttons[i].draw(self.offset_x['button'][i],
-                                            self.offset_y['button'][i],
-                                            self.temp_width['button'],
-                                            self.temp_height['button'])
+                self.main_buttons[i][0].draw(self.offset_x['button'][i],
+                                                self.offset_y['button'][i],
+                                                self.temp_width['button'],
+                                                self.temp_height['button'])
 
 
     def render_statistic(self):
@@ -336,6 +373,105 @@ class Menu(object):
                                     color = cf.STATISTIC_FG_COLOR,
                                     x = offset_x_cell, y = offset_y_row,
                                     anchor_x = 'center', anchor_y = 'center')
+
+
+    def render_dialog(self):
+        if self.current_dialog != None:
+            self.dialog_outer.render()
+            self.dialog_inner.render()
+            self.dialog_title.draw()
+            self.dialog_close.render()
+
+
+    def draw_dialog(self, style, init = False):
+        if init:
+            self.current_dialog = style
+
+        if self.current_dialog != None:
+            self.temp_width['dialog'] = self.menu_width * cf.DIALOG_WIDTH_PERCENTAGE
+            self.temp_height['dialog'] = self.menu_height * cf.DIALOG_HEIGHT_PERCENTAGE
+
+            self.offset_x['dialog'] = self.offset_x['global'] + (self.menu_width - self.temp_width['dialog']) / 2
+            self.offset_y['dialog'] = self.offset_y['global'] + (self.menu_height - self.temp_height['dialog']) / 2
+
+            self.temp_width['inner_dialog'] = self.temp_width['dialog'] - cf.DIALOG_BORDER_THICKNESS * 2
+            self.temp_height['inner_dialog'] = self.temp_height['dialog'] - cf.DIALOG_BORDER_THICKNESS * 2
+
+            self.offset_x['inner_dialog'] = self.offset_x['dialog'] + cf.DIALOG_BORDER_THICKNESS
+            self.offset_y['inner_dialog'] = self.offset_y['dialog'] + cf.DIALOG_BORDER_THICKNESS
+
+            title_spacer = self.temp_height['inner_dialog'] * cf.DIALOG_TITLE_TOP_SPACER
+            tx_size = self.temp_height['inner_dialog'] * cf.DIALOG_TITLE_PERCENTAGE
+            if style == Menu.DIALOG_NEW_GAME: text = cf.DIALOG_TITLE_NEW_GAME
+            elif style == Menu.DIALOG_ABOUT: text = cf.DIALOG_TITLE_ABOUT
+            self.offset_x['dialog_title'] = self.offset_x['inner_dialog'] + self.temp_width['inner_dialog'] / 2
+            self.offset_y['dialog_title'] = self.offset_y['inner_dialog'] + self.temp_height['inner_dialog'] - title_spacer
+
+            self.temp_width['dialog_close'] = self.temp_width['inner_dialog'] * cf.DIALOG_BUTTON_WIDTH_PERCENTAGE
+            self.temp_height['dialog_close'] = self.temp_height['inner_dialog'] * cf.DIALOG_BUTTON_HEIGHT_PERCENTAGE
+            close_button_spacer = self.temp_height['inner_dialog'] * cf.DIALOG_CLOSE_BUTTON_SPACER
+            self.offset_x['dialog_close'] = self.offset_x['inner_dialog'] + (self.temp_width['inner_dialog'] - self.temp_width['dialog_close']) / 2
+            self.offset_y['dialog_close'] = self.offset_y['inner_dialog'] + close_button_spacer
+
+            if init:
+                self.dialog_outer = pm.Rect(self.offset_x['dialog'],
+                                            self.offset_y['dialog'],
+                                            self.temp_width['dialog'],
+                                            self.temp_height['dialog'],
+                                            cf.DIALOG_BORDER_COLOR)
+                self.dialog_inner = pm.Rect(self.offset_x['inner_dialog'],
+                                            self.offset_y['inner_dialog'],
+                                            self.temp_width['inner_dialog'],
+                                            self.temp_height['inner_dialog'],
+                                            cf.DIALOG_BG_COLOR)
+                self.dialog_close = btn.Button(cf,
+                                                self.offset_x['dialog_close'],
+                                                self.offset_y['dialog_close'],
+                                                self.temp_width['dialog_close'],
+                                                self.temp_height['dialog_close'],
+                                                cf.DIALOG_CLOSE_BUTTON_TEXT)
+            else:
+                self.dialog_outer.draw(self.offset_x['dialog'],
+                                        self.offset_y['dialog'],
+                                        self.temp_width['dialog'],
+                                        self.temp_height['dialog'],
+                                        cf.DIALOG_BORDER_COLOR)
+                self.dialog_inner.draw(self.offset_x['inner_dialog'],
+                                        self.offset_y['inner_dialog'],
+                                        self.temp_width['inner_dialog'],
+                                        self.temp_height['inner_dialog'],
+                                        cf.DIALOG_BG_COLOR)
+                self.dialog_close.draw(self.offset_x['dialog_close'],
+                                        self.offset_y['dialog_close'],
+                                        self.temp_width['dialog_close'],
+                                        self.temp_height['dialog_close'])
+
+            self.dialog_title = pyglet.text.Label(text = text,
+                                            font_name = cf.DIALOG_TITLE_FONT,
+                                            font_size = tx_size,
+                                            color = cf.DIALOG_TITLE_COLOR,
+                                            x = self.offset_x['dialog_title'],
+                                            y = self.offset_y['dialog_title'],
+                                            anchor_x = 'center',
+                                            anchor_y = 'top')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     "Please do not run this file directly, include it."

@@ -48,3 +48,5 @@ class Statistic(object):
         return self.data[level][prop]
 
 
+if __name__ == '__main__':
+    "Please do not run this file directly, include it."
